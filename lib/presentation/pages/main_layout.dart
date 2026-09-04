@@ -14,6 +14,7 @@ class MainLayout extends StatefulWidget {
 
 class _MainLayoutState extends State<MainLayout> {
   int _selectedSidebarIndex = 0; // Default to Dashboard
+  int? _hoveredIndex;
 
   final List<Map<String, dynamic>> _sidebarItems = [
     {'title': 'Dashboard', 'icon': Icons.dashboard_outlined, 'activeIcon': Icons.dashboard_rounded},
@@ -57,7 +58,13 @@ class _MainLayoutState extends State<MainLayout> {
   Widget _buildContent() {
     switch (_selectedSidebarIndex) {
       case 0:
-        return const DashboardPage();
+        return DashboardPage(
+          onNavigateToPage: (index) {
+            setState(() {
+              _selectedSidebarIndex = index;
+            });
+          },
+        );
       case 1:
         return const SlipGajiPage();
       case 2:
@@ -110,39 +117,51 @@ class _MainLayoutState extends State<MainLayout> {
 
                             return Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                              child: InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    _selectedSidebarIndex = index;
-                                  });
-                                },
-                                borderRadius: BorderRadius.circular(8),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: isSelected ? Colors.blue.shade700 : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        isSelected ? item['activeIcon'] : item['icon'],
-                                        color: isSelected ? Colors.white : Colors.white70,
-                                        size: 20,
+                              child: MouseRegion(
+                                onEnter: (_) => setState(() => _hoveredIndex = index),
+                                onExit: (_) => setState(() => _hoveredIndex = null),
+                                child: InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedSidebarIndex = index;
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    curve: Curves.easeInOut,
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? Colors.blue.shade700
+                                          : (_hoveredIndex == index ? Colors.white.withValues(alpha: 0.1) : Colors.transparent),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: isSelected ? Colors.blue.shade400 : Colors.transparent,
+                                        width: 1,
                                       ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: Text(
-                                          item['title'],
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            color: isSelected ? Colors.white : Colors.white70,
-                                            fontSize: 14,
-                                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          isSelected ? item['activeIcon'] : item['icon'],
+                                          color: isSelected ? Colors.white : (_hoveredIndex == index ? Colors.white : Colors.white70),
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Expanded(
+                                          child: Text(
+                                            item['title'],
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              color: isSelected ? Colors.white : (_hoveredIndex == index ? Colors.white : Colors.white70),
+                                              fontSize: 14,
+                                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
@@ -162,7 +181,19 @@ class _MainLayoutState extends State<MainLayout> {
           Expanded(
             child: Container(
               color: AppColors.background,
-              child: _buildContent(),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: child,
+                  );
+                },
+                child: KeyedSubtree(
+                  key: ValueKey<int>(_selectedSidebarIndex),
+                  child: _buildContent(),
+                ),
+              ),
             ),
           ),
         ],

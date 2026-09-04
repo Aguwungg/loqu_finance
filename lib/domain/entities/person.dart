@@ -11,11 +11,15 @@ class Person extends HiveObject {
   String nama;
 
   @HiveField(2)
-  String kategori; // Isi dengan 'Pengajar' atau 'Murid'
+  String kategori; // Isi dengan 'Pengajar', 'Murid', atau 'Orang Tua'
+
+  @HiveField(3)
+  String? parentId; // ID Orang Tua (khusus jika kategori = Murid)
 
   Person({
     required this.id,
     required this.nama,
     required this.kategori,
+    this.parentId,
   });
 }

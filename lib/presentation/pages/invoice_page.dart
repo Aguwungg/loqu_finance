@@ -244,7 +244,22 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
     final allPeople = ref.watch(personListProvider);
     final allPrograms = ref.watch(programListProvider);
 
-    final clients = allPeople.where((p) => p.kategori == 'Murid').toList();
+    final parents = allPeople.where((p) => p.kategori == 'Orang Tua').toList();
+
+    // Listen to formState to sync controllers when loaded for edit
+    ref.listen<InvoiceFormState>(invoiceFormProvider, (previous, next) {
+      if (next.tagihanUntuk != _tagihanUntukController.text) {
+        _tagihanUntukController.text = next.tagihanUntuk;
+      }
+      final nextDateText = _formatDate(next.tanggalInvoice);
+      if (nextDateText != _tanggalController.text) {
+        _tanggalController.text = nextDateText;
+      }
+      final nextDueDateText = _formatDate(next.tanggalJatuhTempo);
+      if (nextDueDateText != _jatuhTempoController.text) {
+        _jatuhTempoController.text = nextDueDateText;
+      }
+    });
 
     // Watch generated invoice number reactively
     final invoiceNo = ref.watch(invoiceNumberProvider(formState.tanggalInvoice));
@@ -264,9 +279,9 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Buat Invoice Tagihan',
-                        style: TextStyle(
+                      Text(
+                        formState.isEditMode ? 'Edit Invoice Tagihan' : 'Buat Invoice Tagihan',
+                        style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                           color: AppColors.text,
@@ -291,14 +306,14 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
             // Top Inputs (Tagihan Untuk, Tanggal Invoice, Tanggal Jatuh Tempo)
             Row(
               children: [
-                // Autocomplete Nama Klien / Murid
+                // Autocomplete Nama Klien / Orang Tua
                 Expanded(
                   flex: 4,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'TAGIHAN UNTUK (NAMA ORANG TUA / MURID)',
+                        'TAGIHAN UNTUK (NAMA ORANG TUA)',
                         style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.text),
                       ),
                       const SizedBox(height: 8),
@@ -308,13 +323,16 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
                           if (textEditingValue.text.isEmpty) {
                             return const Iterable<Person>.empty();
                           }
-                          return clients.where((Person option) {
+                          return parents.where((Person option) {
                             return option.nama.toLowerCase().contains(textEditingValue.text.toLowerCase());
                           });
                         },
                         displayStringForOption: (Person option) => option.nama,
                         onSelected: (Person selection) {
+                          final children = allPeople.where((p) => p.kategori == 'Murid' && p.parentId == selection.id).toList();
+                          final childName = children.isNotEmpty ? children.map((c) => c.nama).join(', ') : null;
                           ref.read(invoiceFormProvider.notifier).updateTagihanUntuk(selection.nama);
+                          ref.read(invoiceFormProvider.notifier).updateNamaAnak(childName);
                           _tagihanUntukController.text = selection.nama;
                         },
                         fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
@@ -326,9 +344,19 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
                             focusNode: focusNode,
                             onChanged: (val) {
                               ref.read(invoiceFormProvider.notifier).updateTagihanUntuk(val);
+                              final matchedParent = parents.cast<Person?>().firstWhere(
+                                (p) => p?.nama.toLowerCase() == val.trim().toLowerCase(),
+                                orElse: () => null,
+                              );
+                              if (matchedParent != null) {
+                                final children = allPeople.where((p) => p.kategori == 'Murid' && p.parentId == matchedParent.id).toList();
+                                ref.read(invoiceFormProvider.notifier).updateNamaAnak(
+                                  children.isNotEmpty ? children.map((c) => c.nama).join(', ') : null,
+                                );
+                              }
                             },
                             decoration: InputDecoration(
-                              hintText: 'Cari nama orang tua / murid...',
+                              hintText: 'Cari nama orang tua...',
                               hintStyle: const TextStyle(fontSize: 14, color: AppColors.textLight),
                               prefixIcon: const Icon(Icons.search, size: 20, color: AppColors.textLight),
                               focusedBorder: OutlineInputBorder(
@@ -344,6 +372,19 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
                           );
                         },
                       ),
+                      if (formState.namaAnak != null && formState.namaAnak!.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Icon(Icons.school_outlined, size: 14, color: Colors.blue),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Murid: ${formState.namaAnak}',
+                              style: TextStyle(fontSize: 12, color: Colors.blue.shade800, fontWeight: FontWeight.w500),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -561,9 +602,9 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
                           ),
                           onPressed: () => _simpanDanCetakInvoice(context),
                           icon: const Icon(Icons.print, size: 18),
-                          label: const Text(
-                            'SIMPAN & CETAK INVOICE',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          label: Text(
+                            formState.isEditMode ? 'UPDATE & CETAK INVOICE' : 'SIMPAN & CETAK INVOICE',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                           ),
                         ),
                       ),
@@ -601,39 +642,55 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
         return;
       }
 
-      // Generate PDF doc
-      final pdfBytes = await PdfService.generateInvoicePdf(formState, invoiceNo);
+      try {
+        // Generate PDF doc
+        final pdfBytes = await PdfService.generateInvoicePdf(formState, invoiceNo);
 
-      // Save Transaction record to Hive
-      final newTransaksi = Transaksi(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        tanggal: formState.tanggalInvoice,
-        jenis: 'Invoice',
-        namaTarget: formState.tagihanUntuk,
-        total: formState.totalTagihan,
-      );
+        final isEdit = formState.isEditMode;
+        final txId = formState.transactionId ?? (isEdit ? formState.transactionKey.toString() : DateTime.now().millisecondsSinceEpoch.toString());
 
-      await ref.read(transaksiListProvider.notifier).addTransaksi(newTransaksi);
+        // Save or update Transaction record in Hive
+        final transaksiData = Transaksi(
+          id: txId,
+          tanggal: formState.tanggalInvoice,
+          jenis: 'Invoice',
+          namaTarget: formState.tagihanUntuk,
+          total: formState.totalTagihan,
+        );
 
-      // Save PDF locally and open it
-      final directory = await getApplicationDocumentsDirectory();
-      final fileName = '${invoiceNo.replaceAll('/', '_')}_${formState.tagihanUntuk}.pdf';
-      final filePath = '${directory.path}/$fileName';
-      final file = File(filePath);
-      await file.writeAsBytes(pdfBytes);
+        if (isEdit) {
+          await ref.read(transaksiListProvider.notifier).updateTransaksi(formState.transactionKey, transaksiData);
+        } else {
+          await ref.read(transaksiListProvider.notifier).addTransaksi(transaksiData);
+        }
 
-      // Open PDF automatically
-      await OpenFilex.open(filePath);
+        ref.invalidate(transaksiListProvider);
 
-      messenger.showSnackBar(
-        SnackBar(content: Text('PDF berhasil disimpan di: $filePath')),
-      );
+        // Save PDF locally and open it
+        final directory = await getApplicationDocumentsDirectory();
+        final fileName = '${invoiceNo.replaceAll('/', '_')}_${formState.tagihanUntuk.replaceAll(' ', '_')}.pdf';
+        final filePath = '${directory.path}/$fileName';
+        final file = File(filePath);
+        await file.writeAsBytes(pdfBytes);
 
-      // Reset form fields
-      ref.read(invoiceFormProvider.notifier).resetForm();
-      _tagihanUntukController.clear();
-      _tanggalController.text = _formatDate(DateTime.now());
-      _jatuhTempoController.text = _formatDate(DateTime.now());
+        // Open PDF automatically
+        await OpenFilex.open(filePath);
+
+        messenger.showSnackBar(
+          SnackBar(content: Text(isEdit ? 'Invoice berhasil diperbarui!' : 'PDF berhasil disimpan di: $filePath')),
+        );
+
+        // Reset form fields
+        ref.read(invoiceFormProvider.notifier).resetForm();
+        _tagihanUntukController.clear();
+        _tanggalController.text = _formatDate(DateTime.now());
+        _jatuhTempoController.text = _formatDate(DateTime.now());
+      } catch (e, stackTrace) {
+        debugPrint('Error saving/printing invoice: $e\n$stackTrace');
+        messenger.showSnackBar(
+          SnackBar(content: Text('Terjadi kesalahan: $e')),
+        );
+      }
     }
   }
 }

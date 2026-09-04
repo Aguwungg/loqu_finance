@@ -20,19 +20,22 @@ class PersonAdapter extends TypeAdapter<Person> {
       id: fields[0] as String,
       nama: fields[1] as String,
       kategori: fields[2] as String,
+      parentId: fields[3] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Person obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
       ..write(obj.nama)
       ..writeByte(2)
-      ..write(obj.kategori);
+      ..write(obj.kategori)
+      ..writeByte(3)
+      ..write(obj.parentId);
   }
 
   @override

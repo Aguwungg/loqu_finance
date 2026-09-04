@@ -24,12 +24,13 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
   int _programPage = 1;
   int _pengajarPage = 1;
   int _muridPage = 1;
+  int _orangTuaPage = 1;
   final int _itemsPerPage = 5;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         setState(() {
@@ -205,87 +206,129 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
     );
   }
 
-  // Person (Pengajar/Murid) Add/Edit Dialog
+  // Person (Pengajar/Murid/Orang Tua) Add/Edit Dialog
   void _showPersonDialog({Person? person, required String kategori}) {
     final isEdit = person != null;
     final namaController = TextEditingController(text: isEdit ? person.nama : '');
+    String? selectedParentId = isEdit ? person.parentId : null;
     final formKey = GlobalKey<FormState>();
 
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text(
-            isEdit ? 'Edit Data $kategori' : 'Tambah $kategori Baru',
-            style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.text),
-          ),
-          content: Form(
-            key: formKey,
-            child: SizedBox(
-              width: 400,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: namaController,
-                    decoration: InputDecoration(
-                      labelText: 'Nama Lengkap',
-                      hintText: 'Masukkan nama $kategori',
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: AppColors.accent, width: 2),
-                        borderRadius: BorderRadius.circular(8),
+        final parents = ref.watch(orangTuaListProvider);
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Text(
+                isEdit ? 'Edit Data $kategori' : 'Tambah $kategori Baru',
+                style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.text),
+              ),
+              content: Form(
+                key: formKey,
+                child: SizedBox(
+                  width: 400,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextFormField(
+                        controller: namaController,
+                        decoration: InputDecoration(
+                          labelText: 'Nama Lengkap',
+                          hintText: 'Masukkan nama $kategori',
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        validator: (value) => value == null || value.trim().isEmpty ? 'Nama tidak boleh kosong' : null,
                       ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    validator: (value) => value == null || value.trim().isEmpty ? 'Nama tidak boleh kosong' : null,
+                      if (kategori == 'Murid') ...[
+                        const SizedBox(height: 16),
+                        DropdownButtonFormField<String>(
+                          initialValue: selectedParentId,
+                          decoration: InputDecoration(
+                            labelText: 'Orang Tua',
+                            hintText: 'Pilih Orang Tua',
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          items: [
+                            const DropdownMenuItem<String>(
+                              value: null,
+                              child: Text('Tidak ada (Bisa dikosongkan)'),
+                            ),
+                            ...parents.map((parent) {
+                              return DropdownMenuItem<String>(
+                                value: parent.id,
+                                child: Text(parent.nama),
+                              );
+                            }),
+                          ],
+                          onChanged: (value) {
+                            setDialogState(() {
+                              selectedParentId = value;
+                            });
+                          },
+                        ),
+                      ],
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Batal', style: TextStyle(color: AppColors.textLight)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
-              onPressed: () async {
-                if (formKey.currentState!.validate()) {
-                  final newPerson = Person(
-                    id: isEdit ? person.id : DateTime.now().millisecondsSinceEpoch.toString(),
-                    nama: namaController.text.trim(),
-                    kategori: kategori,
-                  );
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Batal', style: TextStyle(color: AppColors.textLight)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  onPressed: () async {
+                    if (formKey.currentState!.validate()) {
+                      final newPerson = Person(
+                        id: isEdit ? person.id : DateTime.now().millisecondsSinceEpoch.toString(),
+                        nama: namaController.text.trim(),
+                        kategori: kategori,
+                        parentId: kategori == 'Murid' ? selectedParentId : null,
+                      );
 
-                  final messenger = ScaffoldMessenger.of(context);
-                  final navigator = Navigator.of(context);
+                      final messenger = ScaffoldMessenger.of(context);
+                      final navigator = Navigator.of(context);
 
-                  if (isEdit) {
-                    await ref.read(personListProvider.notifier).updatePerson(newPerson);
-                    messenger.showSnackBar(
-                      SnackBar(content: Text('Data $kategori berhasil diperbarui!')),
-                    );
-                  } else {
-                    await ref.read(personListProvider.notifier).addPerson(newPerson);
-                    messenger.showSnackBar(
-                      SnackBar(content: Text('Data $kategori berhasil ditambahkan!')),
-                    );
-                  }
-                  navigator.pop();
-                }
-              },
-              child: const Text('Simpan'),
-            ),
-          ],
+                      if (isEdit) {
+                        await ref.read(personListProvider.notifier).updatePerson(newPerson);
+                        messenger.showSnackBar(
+                          SnackBar(content: Text('Data $kategori berhasil diperbarui!')),
+                        );
+                      } else {
+                        await ref.read(personListProvider.notifier).addPerson(newPerson);
+                        messenger.showSnackBar(
+                          SnackBar(content: Text('Data $kategori berhasil ditambahkan!')),
+                        );
+                      }
+                      navigator.pop();
+                    }
+                  },
+                  child: const Text('Simpan'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -367,6 +410,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
             tabs: const [
               Tab(text: 'Data Pengajar'),
               Tab(text: 'Data Murid'),
+              Tab(text: 'Data Orang Tua'),
               Tab(text: 'Data Program'),
             ],
           ),
@@ -395,7 +439,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                     child: TextField(
                       controller: _searchController,
                       onChanged: (val) {
-                        if (_activeTab == 2) {
+                        if (_activeTab == 3) {
                           ref.read(programSearchQueryProvider.notifier).state = val;
                         } else {
                           ref.read(personSearchQueryProvider.notifier).state = val;
@@ -406,7 +450,9 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                             ? 'Cari nama pengajar...'
                             : _activeTab == 1
                                 ? 'Cari nama murid...'
-                                : 'Cari nama program...',
+                                : _activeTab == 2
+                                    ? 'Cari nama orang tua...'
+                                    : 'Cari nama program...',
                         hintStyle: const TextStyle(fontSize: 14, color: AppColors.textLight),
                         prefixIcon: const Icon(Icons.search, size: 20, color: AppColors.textLight),
                         border: InputBorder.none,
@@ -432,6 +478,8 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                       _showPersonDialog(kategori: 'Pengajar');
                     } else if (_activeTab == 1) {
                       _showPersonDialog(kategori: 'Murid');
+                    } else if (_activeTab == 2) {
+                      _showPersonDialog(kategori: 'Orang Tua');
                     } else {
                       _showProgramDialog();
                     }
@@ -442,7 +490,9 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                         ? 'Tambah Pengajar Baru'
                         : _activeTab == 1
                             ? 'Tambah Murid Baru'
-                            : 'Tambah Program Baru',
+                            : _activeTab == 2
+                                ? 'Tambah Orang Tua Baru'
+                                : 'Tambah Program Baru',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -458,6 +508,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
               children: [
                 _buildPengajarTable(),
                 _buildMuridTable(),
+                _buildOrangTuaTable(),
                 _buildProgramTable(),
               ],
             ),
@@ -604,7 +655,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
         ),
         children: [
           // Header Row
-          _buildTableHeaderRow(const ['NAMA MURID', 'KATEGORI', 'AKSI']),
+          _buildTableHeaderRow(const ['NAMA MURID', 'ORANG TUA', 'AKSI']),
           // Data Rows
           if (paginated.isEmpty)
             TableRow(
@@ -614,6 +665,112 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                     padding: EdgeInsets.all(24.0),
                     child: Text(
                       'Tidak ada data murid.',
+                      style: TextStyle(color: AppColors.textLight, fontStyle: FontStyle.italic),
+                    ),
+                  ),
+                ),
+                _buildTableCell(child: const SizedBox()),
+                _buildTableCell(child: const SizedBox()),
+              ],
+            )
+          else
+            ...paginated.map((person) {
+              final parents = ref.watch(orangTuaListProvider);
+              final parent = parents.firstWhere(
+                (p) => p.id == person.parentId,
+                orElse: () => Person(id: '', nama: '-', kategori: 'Orang Tua'),
+              );
+
+              return TableRow(
+                children: [
+                  _buildTableCell(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                      child: Text(
+                        person.nama,
+                        style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.text, fontSize: 15),
+                      ),
+                    ),
+                  ),
+                  _buildTableCell(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                      child: Text(
+                        parent.nama,
+                        style: const TextStyle(color: AppColors.textLight, fontSize: 14),
+                      ),
+                    ),
+                  ),
+                  _buildTableCell(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 20),
+                          onPressed: () => _showPersonDialog(person: person, kategori: 'Murid'),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
+                          onPressed: () => _showDeleteConfirmation(person, false),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            }),
+        ],
+      ),
+    );
+  }
+
+  // DATA TAB 3: ORANG TUA TABLE
+  Widget _buildOrangTuaTable() {
+    final allFiltered = ref.watch(orangTuaListProvider);
+    final totalCount = allFiltered.length;
+    final totalPages = (totalCount / _itemsPerPage).ceil().clamp(1, double.infinity).toInt();
+
+    if (_orangTuaPage > totalPages) {
+      _orangTuaPage = totalPages;
+    }
+
+    final start = (_orangTuaPage - 1) * _itemsPerPage;
+    final end = (start + _itemsPerPage).clamp(0, totalCount);
+    final paginated = allFiltered.sublist(start, end);
+
+    return _buildTableWrapper(
+      title: 'Daftar Orang Tua',
+      totalItems: totalCount,
+      currentPage: _orangTuaPage,
+      totalPages: totalPages,
+      startIndex: start,
+      endIndex: end,
+      onPageChanged: (page) {
+        setState(() {
+          _orangTuaPage = page;
+        });
+      },
+      child: Table(
+        columnWidths: const {
+          0: FlexColumnWidth(4),
+          1: FlexColumnWidth(2),
+          2: FixedColumnWidth(120),
+        },
+        border: TableBorder(
+          horizontalInside: BorderSide(color: Colors.grey.shade100, width: 1),
+        ),
+        children: [
+          // Header Row
+          _buildTableHeaderRow(const ['NAMA ORANG TUA', 'KATEGORI', 'AKSI']),
+          // Data Rows
+          if (paginated.isEmpty)
+            TableRow(
+              children: [
+                _buildTableCell(
+                  child: const Padding(
+                    padding: EdgeInsets.all(24.0),
+                    child: Text(
+                      'Tidak ada data orang tua.',
                       style: TextStyle(color: AppColors.textLight, fontStyle: FontStyle.italic),
                     ),
                   ),
@@ -650,7 +807,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                       children: [
                         IconButton(
                           icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 20),
-                          onPressed: () => _showPersonDialog(person: person, kategori: 'Murid'),
+                          onPressed: () => _showPersonDialog(person: person, kategori: 'Orang Tua'),
                         ),
                         IconButton(
                           icon: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),

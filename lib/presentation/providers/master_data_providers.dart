@@ -108,3 +108,11 @@ final muridListProvider = Provider<List<Person>>((ref) {
   if (query.isEmpty) return filtered;
   return filtered.where((p) => p.nama.toLowerCase().contains(query)).toList();
 });
+
+final orangTuaListProvider = Provider<List<Person>>((ref) {
+  final people = ref.watch(personListProvider);
+  final query = ref.watch(personSearchQueryProvider).toLowerCase();
+  final filtered = people.where((p) => p.kategori == 'Orang Tua').toList();
+  if (query.isEmpty) return filtered;
+  return filtered.where((p) => p.nama.toLowerCase().contains(query)).toList();
+});

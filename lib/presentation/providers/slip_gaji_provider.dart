@@ -26,8 +26,13 @@ class TransaksiListNotifier extends StateNotifier<List<Transaksi>> {
     loadTransactions();
   }
 
-  Future<void> deleteTransaksi(String id) async {
-    await _repository.deleteTransaksi(id);
+  Future<void> updateTransaksi(dynamic key, Transaksi transaksi) async {
+    await _repository.updateTransaksi(key, transaksi);
+    loadTransactions();
+  }
+
+  Future<void> deleteTransaksi(dynamic keyOrId) async {
+    await _repository.deleteTransaksi(keyOrId);
     loadTransactions();
   }
 }
@@ -70,7 +75,11 @@ class SlipGajiRowState {
   }
 }
 
+const _slipGajiSentinel = Object();
+
 class SlipGajiFormState {
+  final dynamic transactionKey;
+  final String? transactionId;
   final String namaPengajar;
   final DateTime tanggalCetak;
   final List<SlipGajiRowState> rows;
@@ -78,6 +87,8 @@ class SlipGajiFormState {
   final int subsidi;
 
   SlipGajiFormState({
+    this.transactionKey,
+    this.transactionId,
     this.namaPengajar = '',
     required this.tanggalCetak,
     this.rows = const [],
@@ -85,10 +96,14 @@ class SlipGajiFormState {
     this.subsidi = 0,
   });
 
+  bool get isEditMode => transactionKey != null;
+
   int get subtotal => rows.fold(0, (sum, row) => sum + (row.sesi * row.fee));
   int get totalPendapatan => subtotal + subsidi - reimburse;
 
   SlipGajiFormState copyWith({
+    Object? transactionKey = _slipGajiSentinel,
+    Object? transactionId = _slipGajiSentinel,
     String? namaPengajar,
     DateTime? tanggalCetak,
     List<SlipGajiRowState>? rows,
@@ -96,6 +111,8 @@ class SlipGajiFormState {
     int? subsidi,
   }) {
     return SlipGajiFormState(
+      transactionKey: identical(transactionKey, _slipGajiSentinel) ? this.transactionKey : transactionKey,
+      transactionId: identical(transactionId, _slipGajiSentinel) ? this.transactionId : (transactionId as String?),
       namaPengajar: namaPengajar ?? this.namaPengajar,
       tanggalCetak: tanggalCetak ?? this.tanggalCetak,
       rows: rows ?? this.rows,
@@ -116,6 +133,10 @@ class SlipGajiFormNotifier extends StateNotifier<SlipGajiFormState> {
             ),
           ],
         ));
+
+  void setForm(SlipGajiFormState formState) {
+    state = formState;
+  }
 
   void updateNamaPengajar(String nama) {
     state = state.copyWith(namaPengajar: nama);
@@ -180,6 +201,8 @@ class SlipGajiFormNotifier extends StateNotifier<SlipGajiFormState> {
 
   void resetForm() {
     state = SlipGajiFormState(
+      transactionKey: null,
+      transactionId: null,
       tanggalCetak: DateTime.now(),
       rows: [
         SlipGajiRowState(

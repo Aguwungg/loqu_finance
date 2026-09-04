@@ -50,29 +50,35 @@ class PdfService {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              if (pdfLogo != null) ...[
-                pw.Center(
-                  child: pw.Image(pdfLogo, width: 80),
-                ),
-                pw.SizedBox(height: 15),
-              ],
               // Header Kop Surat
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
+                  // Kiri Atas: HANYA LOGO LOQU
+                  if (pdfLogo != null)
+                    pw.Container(
+                      width: 100,
+                      height: 45,
+                      child: pw.Image(pdfLogo, fit: pw.BoxFit.contain),
+                    )
+                  else
+                    pw.SizedBox(width: 100, height: 45),
+                  // Kanan Atas: Judul Dokumen & Tanggal
                   pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    crossAxisAlignment: pw.CrossAxisAlignment.end,
                     children: [
                       pw.Text(
-                        'LOQU',
+                        'SLIP GAJI PENGAJAR',
                         style: pw.TextStyle(
-                          fontSize: 24,
+                          fontSize: 18,
                           fontWeight: pw.FontWeight.bold,
-                          color: PdfColor.fromInt(0xFF001F3F), // Deep Navy Blue
+                          color: PdfColor.fromInt(0xFF001F3F),
                         ),
                       ),
+                      pw.SizedBox(height: 4),
                       pw.Text(
-                        'Tutoring Financial System',
+                        'Tanggal: ${_formatDate(data.tanggalCetak)}',
                         style: const pw.TextStyle(
                           fontSize: 10,
                           color: PdfColors.grey700,
@@ -80,29 +86,10 @@ class PdfService {
                       ),
                     ],
                   ),
-                  pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.end,
-                    children: [
-                      pw.Text(
-                        'SLIP GAJI PENGAJAR',
-                        style: pw.TextStyle(
-                          fontSize: 16,
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColor.fromInt(0xFF001F3F),
-                        ),
-                      ),
-                      pw.Text(
-                        'Tanggal: ${_formatDate(data.tanggalCetak)}',
-                        style: const pw.TextStyle(
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
-              pw.SizedBox(height: 10),
-              pw.Divider(thickness: 2, color: PdfColor.fromInt(0xFF001F3F)),
+              pw.SizedBox(height: 12),
+              pw.Divider(thickness: 1.5, color: PdfColor.fromInt(0xFF001F3F)),
               pw.SizedBox(height: 20),
 
               // Metadata Karyawan/Pengajar
@@ -336,29 +323,44 @@ class PdfService {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              if (pdfLogo != null) ...[
-                pw.Center(
-                  child: pw.Image(pdfLogo, width: 80),
-                ),
-                pw.SizedBox(height: 15),
-              ],
               // Header Kop Surat
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
+                  // Kiri Atas: HANYA LOGO LOQU
+                  if (pdfLogo != null)
+                    pw.Container(
+                      width: 100,
+                      height: 45,
+                      child: pw.Image(pdfLogo, fit: pw.BoxFit.contain),
+                    )
+                  else
+                    pw.SizedBox(width: 100, height: 45),
+                  // Kanan Atas: Judul, Nomor Dokumen, Tanggal
                   pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    crossAxisAlignment: pw.CrossAxisAlignment.end,
                     children: [
                       pw.Text(
-                        'LOQU',
+                        'INVOICE TAGIHAN',
                         style: pw.TextStyle(
-                          fontSize: 24,
+                          fontSize: 18,
                           fontWeight: pw.FontWeight.bold,
-                          color: PdfColor.fromInt(0xFF001F3F), // Deep Navy Blue
+                          color: PdfColor.fromInt(0xFF001F3F),
                         ),
                       ),
+                      pw.SizedBox(height: 4),
                       pw.Text(
-                        'Tutoring Financial System',
+                        invoiceNumber,
+                        style: pw.TextStyle(
+                          fontSize: 11,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColor.fromInt(0xFF001F3F),
+                        ),
+                      ),
+                      pw.SizedBox(height: 2),
+                      pw.Text(
+                        _formatDate(data.tanggalInvoice),
                         style: const pw.TextStyle(
                           fontSize: 10,
                           color: PdfColors.grey700,
@@ -366,36 +368,10 @@ class PdfService {
                       ),
                     ],
                   ),
-                  pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.end,
-                    children: [
-                      pw.Text(
-                        'INVOICE TAGIHAN',
-                        style: pw.TextStyle(
-                          fontSize: 16,
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColor.fromInt(0xFF001F3F),
-                        ),
-                      ),
-                      pw.Text(
-                        'No: $invoiceNumber',
-                        style: pw.TextStyle(
-                          fontSize: 11,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                      ),
-                      pw.Text(
-                        'Tanggal: ${_formatDate(data.tanggalInvoice)}',
-                        style: const pw.TextStyle(
-                          fontSize: 10,
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
-              pw.SizedBox(height: 10),
-              pw.Divider(thickness: 2, color: PdfColor.fromInt(0xFF001F3F)),
+              pw.SizedBox(height: 12),
+              pw.Divider(thickness: 1.5, color: PdfColor.fromInt(0xFF001F3F)),
               pw.SizedBox(height: 20),
 
               // Metadata Invoice
@@ -413,13 +389,20 @@ class PdfService {
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
                           pw.Text(
-                            'Tagihan Untuk (Orang Tua / Murid):',
+                            'Tagihan Untuk (Orang Tua):',
                             style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey600),
                           ),
                           pw.Text(
                             data.tagihanUntuk.isEmpty ? '-' : data.tagihanUntuk,
                             style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
                           ),
+                          if (data.namaAnak != null && data.namaAnak!.isNotEmpty) ...[
+                            pw.SizedBox(height: 4),
+                            pw.Text(
+                              'Nama Murid: ${data.namaAnak}',
+                              style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey800),
+                            ),
+                          ],
                           pw.SizedBox(height: 6),
                           pw.Text(
                             'Jatuh Tempo: ${_formatDate(data.tanggalJatuhTempo)}',

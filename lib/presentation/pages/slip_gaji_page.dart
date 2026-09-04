@@ -114,6 +114,25 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
     final pengajars = allPeople.where((p) => p.kategori == 'Pengajar').toList();
     final murids = allPeople.where((p) => p.kategori == 'Murid').toList();
 
+    // Listen to formState to sync controllers when loaded for edit
+    ref.listen<SlipGajiFormState>(slipGajiFormProvider, (previous, next) {
+      if (next.namaPengajar != _pengajarController.text) {
+        _pengajarController.text = next.namaPengajar;
+      }
+      final nextDateText = _formatDate(next.tanggalCetak);
+      if (nextDateText != _tanggalController.text) {
+        _tanggalController.text = nextDateText;
+      }
+      final nextReimburseText = next.reimburse == 0 ? '' : next.reimburse.toString();
+      if (nextReimburseText != _reimburseController.text) {
+        _reimburseController.text = nextReimburseText;
+      }
+      final nextSubsidiText = next.subsidi == 0 ? '' : next.subsidi.toString();
+      if (nextSubsidiText != _subsidiController.text) {
+        _subsidiController.text = nextSubsidiText;
+      }
+    });
+
     return Padding(
       padding: const EdgeInsets.all(32.0),
       child: Form(
@@ -128,17 +147,17 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text(
-                        'Buat Slip Gaji Pengajar',
-                        style: TextStyle(
+                        formState.isEditMode ? 'Edit Slip Gaji Pengajar' : 'Buat Slip Gaji Pengajar',
+                        style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                           color: AppColors.text,
                         ),
                       ),
-                      SizedBox(height: 6),
-                      Text(
+                      const SizedBox(height: 6),
+                      const Text(
                         'Formulir untuk menghasilkan slip gaji pengajar berdasarkan sesi mengajar.',
                         style: TextStyle(
                           fontSize: 14,
@@ -492,9 +511,9 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
                           ),
                           onPressed: () => _simpanDanCetakPDF(context),
                           icon: const Icon(Icons.print, size: 18),
-                          label: const Text(
-                            'SIMPAN & CETAK PDF',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          label: Text(
+                            formState.isEditMode ? 'UPDATE & CETAK PDF' : 'SIMPAN & CETAK PDF',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                           ),
                         ),
                       ),
@@ -531,40 +550,56 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
         return;
       }
 
-      // Generate PDF doc
-      final pdfBytes = await PdfService.generateSlipGajiPdf(formState);
+      try {
+        // Generate PDF doc
+        final pdfBytes = await PdfService.generateSlipGajiPdf(formState);
 
-      // Save Transaction record to Hive
-      final newTransaksi = Transaksi(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        tanggal: formState.tanggalCetak,
-        jenis: 'Slip Gaji',
-        namaTarget: formState.namaPengajar,
-        total: formState.totalPendapatan,
-      );
+        final isEdit = formState.isEditMode;
+        final txId = formState.transactionId ?? (isEdit ? formState.transactionKey.toString() : DateTime.now().millisecondsSinceEpoch.toString());
 
-      await ref.read(transaksiListProvider.notifier).addTransaksi(newTransaksi);
+        // Save or update Transaction record in Hive
+        final transaksiData = Transaksi(
+          id: txId,
+          tanggal: formState.tanggalCetak,
+          jenis: 'Slip Gaji',
+          namaTarget: formState.namaPengajar,
+          total: formState.totalPendapatan,
+        );
 
-      // Save PDF locally and open it
-      final directory = await getApplicationDocumentsDirectory();
-      final fileName = 'SlipGaji_${formState.namaPengajar}_${_formatDate(formState.tanggalCetak).replaceAll('/', '-')}.pdf';
-      final filePath = '${directory.path}/$fileName';
-      final file = File(filePath);
-      await file.writeAsBytes(pdfBytes);
+        if (isEdit) {
+          await ref.read(transaksiListProvider.notifier).updateTransaksi(formState.transactionKey, transaksiData);
+        } else {
+          await ref.read(transaksiListProvider.notifier).addTransaksi(transaksiData);
+        }
 
-      // Open PDF automatically
-      await OpenFilex.open(filePath);
+        ref.invalidate(transaksiListProvider);
 
-      messenger.showSnackBar(
-        SnackBar(content: Text('PDF berhasil disimpan di: $filePath')),
-      );
+        // Save PDF locally and open it
+        final directory = await getApplicationDocumentsDirectory();
+        final fileName = 'SlipGaji_${formState.namaPengajar.replaceAll(' ', '_')}_${_formatDate(formState.tanggalCetak).replaceAll('/', '-')}.pdf';
+        final filePath = '${directory.path}/$fileName';
+        final file = File(filePath);
+        await file.writeAsBytes(pdfBytes);
 
-      // Reset form fields
-      ref.read(slipGajiFormProvider.notifier).resetForm();
-      _pengajarController.clear();
-      _reimburseController.clear();
-      _subsidiController.clear();
-      _tanggalController.text = _formatDate(DateTime.now());
+        // Open PDF automatically
+        await OpenFilex.open(filePath);
+
+        messenger.showSnackBar(
+          SnackBar(content: Text(isEdit ? 'Slip gaji berhasil diperbarui!' : 'PDF berhasil disimpan di: $filePath')),
+        );
+
+        // Reset form fields
+        ref.read(slipGajiFormProvider.notifier).resetForm();
+        _pengajarController.clear();
+        _reimburseController.clear();
+        _subsidiController.clear();
+        _tanggalController.text = _formatDate(DateTime.now());
+      } catch (e, stackTrace) {
+        debugPrint('Error saving/printing slip gaji: $e\n$stackTrace');
+        messenger.showSnackBar(
+          SnackBar(content: Text('Terjadi kesalahan: $e')),
+        );
+      }
     }
   }
 }

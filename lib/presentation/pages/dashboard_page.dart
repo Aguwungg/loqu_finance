@@ -1,11 +1,21 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:open_filex/open_filex.dart';
 import '../../core/constants/colors.dart';
+import '../../domain/entities/person.dart';
 import '../../domain/entities/transaksi.dart';
+import '../../domain/entities/program.dart';
 import '../providers/slip_gaji_provider.dart';
+import '../providers/invoice_provider.dart';
+import '../providers/master_data_providers.dart';
+import '../services/pdf_service.dart';
 
 class DashboardPage extends ConsumerWidget {
-  const DashboardPage({super.key});
+  final ValueChanged<int>? onNavigateToPage;
+
+  const DashboardPage({super.key, this.onNavigateToPage});
 
   String _formatDate(DateTime date) {
     final day = date.day.toString().padLeft(2, '0');
@@ -43,6 +53,178 @@ class DashboardPage extends ConsumerWidget {
       }
     }
     return buffer.toString().split('').reversed.join('');
+  }
+
+  Future<void> _handleReprint(BuildContext context, WidgetRef ref, Transaksi tx) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final pdfBytes = tx.jenis == 'Invoice'
+          ? await PdfService.generateInvoicePdf(
+              InvoiceFormState(
+                tagihanUntuk: tx.namaTarget,
+                tanggalInvoice: tx.tanggal,
+                tanggalJatuhTempo: tx.tanggal,
+                rows: [
+                  InvoiceRowState(
+                    id: 'reprint',
+                    program: Program(id: 'reprint', namaProgram: 'Layanan Tutoring (Reprint)', defaultFeePengajar: 0, defaultHargaKlien: tx.total),
+                    kuantitas: 1,
+                    harga: tx.total,
+                  ),
+                ],
+              ),
+              'INV_REPRINT_${tx.id}',
+            )
+          : await PdfService.generateSlipGajiPdf(
+              SlipGajiFormState(
+                namaPengajar: tx.namaTarget,
+                tanggalCetak: tx.tanggal,
+                reimburse: 0,
+                subsidi: 0,
+                rows: [
+                  SlipGajiRowState(
+                    id: 'reprint',
+                    namaAnak: 'Siswa',
+                    program: Program(id: 'reprint', namaProgram: 'Honor Mengajar (Reprint)', defaultFeePengajar: tx.total, defaultHargaKlien: 0),
+                    sesi: 1,
+                    fee: tx.total,
+                  ),
+                ],
+              ),
+            );
+
+      final directory = await getApplicationDocumentsDirectory();
+      final fileName = tx.jenis == 'Invoice'
+          ? 'Invoice_Reprint_${tx.namaTarget.replaceAll(' ', '_')}_${tx.id}.pdf'
+          : 'SlipGaji_Reprint_${tx.namaTarget.replaceAll(' ', '_')}_${tx.id}.pdf';
+      final filePath = '${directory.path}/$fileName';
+      final file = File(filePath);
+      await file.writeAsBytes(pdfBytes);
+
+      await OpenFilex.open(filePath);
+
+      messenger.showSnackBar(
+        SnackBar(content: Text('PDF berhasil dicetak ulang di: $filePath')),
+      );
+    } catch (e, stackTrace) {
+      debugPrint('Error reprinting PDF: $e\n$stackTrace');
+      messenger.showSnackBar(
+        SnackBar(content: Text('Gagal mencetak ulang PDF: $e')),
+      );
+    }
+  }
+
+  void _handleEdit(WidgetRef ref, Transaksi tx) {
+    final programs = ref.read(programListProvider);
+    final defaultProgram = programs.isNotEmpty ? programs.first : null;
+    final dynamic txKey = tx.key ?? tx.id;
+
+    if (tx.jenis == 'Invoice') {
+      final people = ref.read(personListProvider);
+      final parent = people.cast<Person?>().firstWhere(
+        (p) => p?.kategori == 'Orang Tua' && p?.nama.toLowerCase() == tx.namaTarget.toLowerCase(),
+        orElse: () => null,
+      );
+      String? matchedChildName;
+      if (parent != null) {
+        final children = people.where((p) => p.kategori == 'Murid' && p.parentId == parent.id).toList();
+        if (children.isNotEmpty) {
+          matchedChildName = children.map((c) => c.nama).join(', ');
+        }
+      }
+
+      final notifier = ref.read(invoiceFormProvider.notifier);
+      notifier.setForm(
+        InvoiceFormState(
+          transactionKey: txKey,
+          transactionId: tx.id,
+          tagihanUntuk: tx.namaTarget,
+          namaAnak: matchedChildName,
+          tanggalInvoice: tx.tanggal,
+          tanggalJatuhTempo: tx.tanggal,
+          rows: [
+            InvoiceRowState(
+              id: '1',
+              program: defaultProgram,
+              hariMengaji: 'Setiap Pertemuan',
+              kuantitas: 1,
+              harga: tx.total,
+            ),
+          ],
+        ),
+      );
+      onNavigateToPage?.call(2); // Navigasi ke Buat Invoice (index 2)
+    } else {
+      final notifier = ref.read(slipGajiFormProvider.notifier);
+      notifier.setForm(
+        SlipGajiFormState(
+          transactionKey: txKey,
+          transactionId: tx.id,
+          namaPengajar: tx.namaTarget,
+          tanggalCetak: tx.tanggal,
+          reimburse: 0,
+          subsidi: 0,
+          rows: [
+            SlipGajiRowState(
+              id: '1',
+              namaAnak: 'Siswa',
+              program: defaultProgram,
+              sesi: 1,
+              fee: tx.total,
+            ),
+          ],
+        ),
+      );
+      onNavigateToPage?.call(1); // Navigasi ke Buat Slip Gaji (index 1)
+    }
+  }
+
+  void _showDeleteConfirmation(BuildContext context, WidgetRef ref, Transaksi tx) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text(
+            'Hapus Transaksi',
+            style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.text),
+          ),
+          content: Text('Apakah Anda yakin ingin menghapus transaksi "${tx.jenis} - ${tx.namaTarget}"?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal', style: TextStyle(color: AppColors.textLight)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                final navigator = Navigator.of(context);
+                final dynamic txKey = tx.key ?? tx.id;
+                try {
+                  await ref.read(transaksiListProvider.notifier).deleteTransaksi(txKey);
+                  ref.invalidate(transaksiListProvider);
+                  navigator.pop();
+                  messenger.showSnackBar(
+                    const SnackBar(content: Text('Transaksi berhasil dihapus!')),
+                  );
+                } catch (e, stackTrace) {
+                  debugPrint('Error deleting transaction: $e\n$stackTrace');
+                  messenger.showSnackBar(
+                    SnackBar(content: Text('Gagal menghapus transaksi: $e')),
+                  );
+                }
+              },
+              child: const Text('Hapus'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -146,6 +328,7 @@ class DashboardPage extends ConsumerWidget {
                           1: FlexColumnWidth(2), // Jenis Transaksi
                           2: FlexColumnWidth(4), // Deskripsi / Penerima
                           3: FlexColumnWidth(3), // Total Nominal
+                          4: FixedColumnWidth(150), // Aksi
                         },
                         border: TableBorder(
                           horizontalInside: BorderSide(color: Colors.grey.shade100, width: 1),
@@ -155,7 +338,8 @@ class DashboardPage extends ConsumerWidget {
                             'TANGGAL',
                             'JENIS TRANSAKSI',
                             'DESKRIPSI / PENERIMA',
-                            'TOTAL NOMINAL'
+                            'TOTAL NOMINAL',
+                            'AKSI'
                           ]),
                           if (latestTransactions.isEmpty)
                             TableRow(
@@ -174,6 +358,7 @@ class DashboardPage extends ConsumerWidget {
                                 _buildTableCell(child: const SizedBox()),
                                 _buildTableCell(child: const SizedBox()),
                                 _buildTableCell(child: const SizedBox()),
+                                _buildTableCell(child: const SizedBox()),
                               ],
                             )
                           else
@@ -184,7 +369,7 @@ class DashboardPage extends ConsumerWidget {
                                   _buildTableCell(
                                     child: Padding(
                                       padding: const EdgeInsets.symmetric(
-                                          horizontal: 24.0, vertical: 16.0),
+                                          horizontal: 12.0, vertical: 16.0),
                                       child: Text(
                                         _formatDate(tx.tanggal),
                                         style: const TextStyle(
@@ -195,42 +380,40 @@ class DashboardPage extends ConsumerWidget {
                                   _buildTableCell(
                                     child: Padding(
                                       padding: const EdgeInsets.symmetric(
-                                          horizontal: 24.0, vertical: 16.0),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 8, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: isInvoice
-                                                  ? Colors.green.shade50
-                                                  : Colors.red.shade50,
-                                              borderRadius: BorderRadius.circular(4),
-                                              border: Border.all(
-                                                  color: isInvoice
-                                                      ? Colors.green.shade100
-                                                      : Colors.red.shade100),
-                                            ),
-                                            child: Text(
-                                              tx.jenis,
-                                              style: TextStyle(
+                                          horizontal: 12.0, vertical: 16.0),
+                                      child: Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: isInvoice
+                                                ? Colors.green.shade50
+                                                : Colors.red.shade50,
+                                            borderRadius: BorderRadius.circular(4),
+                                            border: Border.all(
                                                 color: isInvoice
-                                                    ? Colors.green.shade700
-                                                    : Colors.red.shade700,
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                              ),
+                                                    ? Colors.green.shade100
+                                                    : Colors.red.shade100),
+                                          ),
+                                          child: Text(
+                                            tx.jenis,
+                                            style: TextStyle(
+                                              color: isInvoice
+                                                  ? Colors.green.shade700
+                                                  : Colors.red.shade700,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                        ],
+                                        ),
                                       ),
                                     ),
                                   ),
                                   _buildTableCell(
                                     child: Padding(
                                       padding: const EdgeInsets.symmetric(
-                                          horizontal: 24.0, vertical: 16.0),
+                                          horizontal: 12.0, vertical: 16.0),
                                       child: Text(
                                         tx.namaTarget,
                                         style: const TextStyle(
@@ -243,7 +426,7 @@ class DashboardPage extends ConsumerWidget {
                                   _buildTableCell(
                                     child: Padding(
                                       padding: const EdgeInsets.symmetric(
-                                          horizontal: 24.0, vertical: 16.0),
+                                          horizontal: 12.0, vertical: 16.0),
                                       child: Text(
                                         '${isInvoice ? '+' : '-'} Rp ${_formatCurrencyOnly(tx.total)}',
                                         style: TextStyle(
@@ -254,6 +437,34 @@ class DashboardPage extends ConsumerWidget {
                                           fontSize: 14,
                                         ),
                                       ),
+                                    ),
+                                  ),
+                                  _buildTableCell(
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        IconButton(
+                                          visualDensity: VisualDensity.compact,
+                                          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                                          icon: const Icon(Icons.print_outlined, color: Colors.blue, size: 20),
+                                          tooltip: 'Cetak Ulang',
+                                          onPressed: () => _handleReprint(context, ref, tx),
+                                        ),
+                                        IconButton(
+                                          visualDensity: VisualDensity.compact,
+                                          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                                          icon: const Icon(Icons.edit_outlined, color: Colors.orange, size: 20),
+                                          tooltip: 'Edit',
+                                          onPressed: () => _handleEdit(ref, tx),
+                                        ),
+                                        IconButton(
+                                          visualDensity: VisualDensity.compact,
+                                          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                                          icon: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
+                                          tooltip: 'Hapus',
+                                          onPressed: () => _showDeleteConfirmation(context, ref, tx),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
@@ -286,7 +497,7 @@ class DashboardPage extends ConsumerWidget {
         border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -350,12 +561,14 @@ class DashboardPage extends ConsumerWidget {
         color: AppColors.tableHeader,
       ),
       children: headings.map((title) {
+        final isActions = title == 'AKSI';
         return TableCell(
           verticalAlignment: TableCellVerticalAlignment.middle,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 14.0),
             child: Text(
               title,
+              textAlign: isActions ? TextAlign.center : TextAlign.left,
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 color: AppColors.text,

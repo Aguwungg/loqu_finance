@@ -34,29 +34,45 @@ class InvoiceRowState {
   }
 }
 
+const _invoiceSentinel = Object();
+
 class InvoiceFormState {
+  final dynamic transactionKey;
+  final String? transactionId;
   final String tagihanUntuk;
+  final String? namaAnak;
   final DateTime tanggalInvoice;
   final DateTime tanggalJatuhTempo;
   final List<InvoiceRowState> rows;
 
   InvoiceFormState({
+    this.transactionKey,
+    this.transactionId,
     this.tagihanUntuk = '',
+    this.namaAnak,
     required this.tanggalInvoice,
     required this.tanggalJatuhTempo,
     this.rows = const [],
   });
 
+  bool get isEditMode => transactionKey != null;
+
   int get totalTagihan => rows.fold(0, (sum, row) => sum + (row.kuantitas * row.harga));
 
   InvoiceFormState copyWith({
+    Object? transactionKey = _invoiceSentinel,
+    Object? transactionId = _invoiceSentinel,
     String? tagihanUntuk,
+    Object? namaAnak = _invoiceSentinel,
     DateTime? tanggalInvoice,
     DateTime? tanggalJatuhTempo,
     List<InvoiceRowState>? rows,
   }) {
     return InvoiceFormState(
+      transactionKey: identical(transactionKey, _invoiceSentinel) ? this.transactionKey : transactionKey,
+      transactionId: identical(transactionId, _invoiceSentinel) ? this.transactionId : (transactionId as String?),
       tagihanUntuk: tagihanUntuk ?? this.tagihanUntuk,
+      namaAnak: identical(namaAnak, _invoiceSentinel) ? this.namaAnak : (namaAnak as String?),
       tanggalInvoice: tanggalInvoice ?? this.tanggalInvoice,
       tanggalJatuhTempo: tanggalJatuhTempo ?? this.tanggalJatuhTempo,
       rows: rows ?? this.rows,
@@ -74,8 +90,16 @@ class InvoiceFormNotifier extends StateNotifier<InvoiceFormState> {
           ],
         ));
 
+  void setForm(InvoiceFormState formState) {
+    state = formState;
+  }
+
   void updateTagihanUntuk(String nama) {
     state = state.copyWith(tagihanUntuk: nama);
+  }
+
+  void updateNamaAnak(String? nama) {
+    state = state.copyWith(namaAnak: nama);
   }
 
   void updateTanggalInvoice(DateTime date) {
@@ -136,6 +160,9 @@ class InvoiceFormNotifier extends StateNotifier<InvoiceFormState> {
 
   void resetForm() {
     state = InvoiceFormState(
+      transactionKey: null,
+      transactionId: null,
+      namaAnak: null,
       tanggalInvoice: DateTime.now(),
       tanggalJatuhTempo: DateTime.now(),
       rows: [
