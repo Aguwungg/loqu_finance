@@ -1,0 +1,39 @@
+name: Build Portable Windows
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Run Build Runner
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build Windows Executable
+        run: flutter build windows --release
+
+      - name: Compress Release Package
+        shell: pwsh
+        run: |
+          Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath LOQU_Windows_Portable.zip
+
+      - name: Upload Output Zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: LOQU-App-Crack-Style
+          path: LOQU_Windows_Portable.zip
