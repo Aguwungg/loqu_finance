@@ -406,7 +406,6 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
                           );
                         },
                       ),
-                    ),
                     // Add Row Action Button Area
                     Padding(
                       padding: const EdgeInsets.all(16.0),
