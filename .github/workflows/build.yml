@@ -27,10 +27,19 @@ jobs:
       - name: Build Windows Executable
         run: flutter build windows --release
 
-      - name: Compress Release Package
+      - name: Copy C++ Runtime DLLs (Prevent Missing DLL Errors)
         shell: pwsh
         run: |
-          Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath LOQU_Windows_Portable.zip
+          Copy-Item "C:\Windows\System32\vcruntime140.dll" -Destination "build\windows\x64\runner\Release\" -ErrorAction SilentlyContinue
+          Copy-Item "C:\Windows\System32\vcruntime140_1.dll" -Destination "build\windows\x64\runner\Release\" -ErrorAction SilentlyContinue
+          Copy-Item "C:\Windows\System32\msvcp140.dll" -Destination "build\windows\x64\runner\Release\" -ErrorAction SilentlyContinue
+
+      - name: Package Release inside a Folder (Prevent Extractor Errors)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path build\LOQU_App_Windows
+          Copy-Item -Path build\windows\x64\runner\Release\* -Destination build\LOQU_App_Windows -Recurse
+          Compress-Archive -Path build\LOQU_App_Windows -DestinationPath LOQU_Windows_Portable.zip
 
       - name: Upload Output Zip
         uses: actions/upload-artifact@v4
