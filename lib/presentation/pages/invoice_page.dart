@@ -262,10 +262,10 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
     // Watch generated invoice number reactively
     final invoiceNo = ref.watch(invoiceNumberProvider(formState.tanggalInvoice));
 
-    return Padding(
-      padding: const EdgeInsets.all(32.0),
-      child: Form(
-        key: _formKey,
+    return Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(32.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -455,8 +455,7 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
             SizedBox(height: 32),
 
             // Dynamic Table Area
-            Expanded(
-              child: Container(
+            Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -486,12 +485,13 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
                     ),
                     Divider(height: 1, color: context.colors.border),
                     // Table Body List Rows
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: formState.rows.length,
-                        itemBuilder: (context, index) {
-                          final row = formState.rows[index];
-                          return Container(
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: formState.rows.length,
+                      itemBuilder: (context, index) {
+                        final row = formState.rows[index];
+                        return Container(
                             decoration: BoxDecoration(
                               border: Border(bottom: BorderSide(color: context.colors.border, width: 0.5)),
                             ),
@@ -549,7 +549,6 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
                   ],
                 ),
               ),
-            ),
             SizedBox(height: 24),
 
             // Bottom calculations section (Total Tagihan and Save/Print Action)

@@ -157,10 +157,10 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
       }
     });
 
-    return Padding(
-      padding: const EdgeInsets.all(32.0),
-      child: Form(
-        key: _formKey,
+    return Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(32.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -341,8 +341,7 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
             SizedBox(height: 12),
 
             // Dynamic Table Area
-            Expanded(
-              child: Container(
+            Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -372,12 +371,13 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
                     ),
                     Divider(height: 1, color: context.colors.border),
                     // Table Body List Rows
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: formState.rows.length,
-                        itemBuilder: (context, index) {
-                          final row = formState.rows[index];
-                          return Container(
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: formState.rows.length,
+                      itemBuilder: (context, index) {
+                        final row = formState.rows[index];
+                        return Container(
                             decoration: BoxDecoration(
                               border: Border(bottom: BorderSide(color: context.colors.border, width: 0.5)),
                             ),
@@ -430,7 +430,6 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
                   ],
                 ),
               ),
-            ),
             SizedBox(height: 24),
 
             // Bottom calculations section (Reimburse, Subsidi, and Grand Total)
