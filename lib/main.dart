@@ -9,8 +9,26 @@ import 'domain/entities/transaksi.dart';
 import 'presentation/pages/main_layout.dart';
 import 'presentation/providers/theme_provider.dart';
 import 'core/constants/colors.dart';
+import 'dart:io' show Platform;
+import 'package:window_manager/window_manager.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    await windowManager.ensureInitialized();
+    WindowOptions windowOptions = const WindowOptions(
+      size: Size(1280, 720),
+      minimumSize: Size(800, 600),
+      center: true,
+      title: 'LOQU Finance',
+    );
+    windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.show();
+      await windowManager.focus();
+      // Uncomment to force it to start maximized:
+      // await windowManager.maximize();
+    });
+  }
 
   try {
     // Inisialisasi database lokal Hive
