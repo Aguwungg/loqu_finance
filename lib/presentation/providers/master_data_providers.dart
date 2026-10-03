@@ -9,11 +9,11 @@ import '../../data/repositories/person_repository_impl.dart';
 
 // --- Repositories Providers ---
 final programRepositoryProvider = Provider<ProgramRepository>((ref) {
-  return ProgramRepositoryImpl(Hive.box<Program>('programBox'));
+  return ProgramRepositoryImpl(Hive.box<Program>('programBoxV2'));
 });
 
 final personRepositoryProvider = Provider<PersonRepository>((ref) {
-  return PersonRepositoryImpl(Hive.box<Person>('personBox'));
+  return PersonRepositoryImpl(Hive.box<Person>('personBoxV2'));
 });
 
 // --- State Notifiers for raw Hive data ---

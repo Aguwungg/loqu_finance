@@ -9,9 +9,7 @@ import '../providers/master_data_providers.dart';
 import '../providers/invoice_provider.dart';
 import '../providers/slip_gaji_provider.dart';
 import '../services/pdf_service.dart';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
-import 'package:open_filex/open_filex.dart';
+import 'package:printing/printing.dart';
 
 class InvoicePage extends ConsumerStatefulWidget {
   const InvoicePage({super.key});
@@ -77,10 +75,10 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primary,
+            colorScheme: ColorScheme.light(
+              primary: context.colors.primary,
               onPrimary: Colors.white,
-              onSurface: AppColors.text,
+              onSurface: context.colors.text,
             ),
           ),
           child: child!,
@@ -105,10 +103,10 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primary,
+            colorScheme: ColorScheme.light(
+              primary: context.colors.primary,
               onPrimary: Colors.white,
-              onSurface: AppColors.text,
+              onSurface: context.colors.text,
             ),
           ),
           child: child!,
@@ -133,7 +131,7 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
       builder: (context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Tambah Program Baru', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.text)),
+          title: Text('Tambah Program Baru', style: TextStyle(fontWeight: FontWeight.bold, color: context.colors.text)),
           content: Form(
             key: quickFormKey,
             child: SizedBox(
@@ -147,14 +145,14 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
                       labelText: 'Nama Program',
                       hintText: 'Misal: Reguler Online',
                       focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                        borderSide: BorderSide(color: context.colors.accent, width: 2),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                     validator: (value) => value == null || value.trim().isEmpty ? 'Nama program wajib diisi' : null,
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   TextFormField(
                     controller: hargaController,
                     keyboardType: TextInputType.number,
@@ -162,7 +160,7 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
                       labelText: 'Standar Harga Klien (Rp)',
                       hintText: 'Misal: 120000',
                       focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                        borderSide: BorderSide(color: context.colors.accent, width: 2),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -177,7 +175,7 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   TextFormField(
                     controller: feeController,
                     keyboardType: TextInputType.number,
@@ -185,7 +183,7 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
                       labelText: 'Standar Fee Pengajar (Rp)',
                       hintText: 'Default: 0',
                       focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                        borderSide: BorderSide(color: context.colors.accent, width: 2),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -205,11 +203,11 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, null),
-              child: const Text('Batal', style: TextStyle(color: AppColors.textLight)),
+              child: Text('Batal', style: TextStyle(color: context.colors.textLight)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: context.colors.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
@@ -230,7 +228,7 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
                   navigator.pop(newProgram);
                 }
               },
-              child: const Text('Simpan'),
+              child: Text('Simpan'),
             ),
           ],
         );
@@ -281,13 +279,13 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
                     children: [
                       Text(
                         formState.isEditMode ? 'Edit Invoice Tagihan' : 'Buat Invoice Tagihan',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.text,
+                          color: context.colors.text,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      SizedBox(height: 6),
                       Text(
                         'Nomor Invoice: $invoiceNo',
                         style: TextStyle(
@@ -301,7 +299,7 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
                 ),
               ],
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
 
             // Top Inputs (Tagihan Untuk, Tanggal Invoice, Tanggal Jatuh Tempo)
             Row(
@@ -312,11 +310,11 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'TAGIHAN UNTUK (NAMA ORANG TUA)',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.text),
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: context.colors.text),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Autocomplete<Person>(
                         initialValue: TextEditingValue(text: formState.tagihanUntuk),
                         optionsBuilder: (TextEditingValue textEditingValue) {
@@ -357,15 +355,15 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
                             },
                             decoration: InputDecoration(
                               hintText: 'Cari nama orang tua...',
-                              hintStyle: const TextStyle(fontSize: 14, color: AppColors.textLight),
-                              prefixIcon: const Icon(Icons.search, size: 20, color: AppColors.textLight),
+                              hintStyle: TextStyle(fontSize: 14, color: context.colors.textLight),
+                              prefixIcon: Icon(Icons.search, size: 20, color: context.colors.textLight),
                               focusedBorder: OutlineInputBorder(
-                                borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                                borderSide: BorderSide(color: context.colors.accent, width: 2),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
-                                borderSide: const BorderSide(color: AppColors.border),
+                                borderSide: BorderSide(color: context.colors.border),
                               ),
                             ),
                             validator: (value) => value == null || value.trim().isEmpty ? 'Nama tagihan wajib diisi' : null,
@@ -373,11 +371,11 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
                         },
                       ),
                       if (formState.namaAnak != null && formState.namaAnak!.isNotEmpty) ...[
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         Row(
                           children: [
-                            const Icon(Icons.school_outlined, size: 14, color: Colors.blue),
-                            const SizedBox(width: 4),
+                            Icon(Icons.school_outlined, size: 14, color: Colors.blue),
+                            SizedBox(width: 4),
                             Text(
                               'Murid: ${formState.namaAnak}',
                               style: TextStyle(fontSize: 12, color: Colors.blue.shade800, fontWeight: FontWeight.w500),
@@ -388,64 +386,64 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
                     ],
                   ),
                 ),
-                const SizedBox(width: 24),
+                SizedBox(width: 24),
                 // Tanggal Invoice Picker
                 Expanded(
                   flex: 3,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'TANGGAL INVOICE',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.text),
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: context.colors.text),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       TextFormField(
                         controller: _tanggalController,
                         readOnly: true,
                         onTap: () => _selectInvoiceDate(context),
                         decoration: InputDecoration(
                           hintText: 'mm/dd/yyyy',
-                          suffixIcon: const Icon(Icons.calendar_today, size: 18, color: AppColors.textLight),
+                          suffixIcon: Icon(Icons.calendar_today, size: 18, color: context.colors.textLight),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                            borderSide: BorderSide(color: context.colors.accent, width: 2),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: AppColors.border),
+                            borderSide: BorderSide(color: context.colors.border),
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 24),
+                SizedBox(width: 24),
                 // Tanggal Jatuh Tempo Picker
                 Expanded(
                   flex: 3,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'TANGGAL JATUH TEMPO',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.text),
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: context.colors.text),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       TextFormField(
                         controller: _jatuhTempoController,
                         readOnly: true,
                         onTap: () => _selectJatuhTempoDate(context),
                         decoration: InputDecoration(
                           hintText: 'mm/dd/yyyy',
-                          suffixIcon: const Icon(Icons.calendar_today, size: 18, color: AppColors.textLight),
+                          suffixIcon: Icon(Icons.calendar_today, size: 18, color: context.colors.textLight),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                            borderSide: BorderSide(color: context.colors.accent, width: 2),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: AppColors.border),
+                            borderSide: BorderSide(color: context.colors.border),
                           ),
                         ),
                       ),
@@ -454,7 +452,7 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
                 ),
               ],
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
 
             // Dynamic Table Area
             Expanded(
@@ -462,31 +460,31 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: context.colors.border),
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: Column(
                   children: [
                     // Table Header Column Labels
                     Container(
-                      color: AppColors.tableHeader,
+                      color: context.colors.tableHeader,
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                       child: Row(
-                        children: const [
-                          Expanded(flex: 3, child: Text('ITEM PROGRAM', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.text))),
+                        children: [
+                          Expanded(flex: 3, child: Text('ITEM PROGRAM', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: context.colors.text))),
                           SizedBox(width: 16),
-                          Expanded(flex: 2, child: Text('HARI MENGAJI', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.text))),
+                          Expanded(flex: 2, child: Text('HARI MENGAJI', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: context.colors.text))),
                           SizedBox(width: 16),
-                          Expanded(flex: 2, child: Text('KUANTITAS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.text))),
+                          Expanded(flex: 2, child: Text('KUANTITAS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: context.colors.text))),
                           SizedBox(width: 16),
-                          Expanded(flex: 2, child: Text('HARGA (RP)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.text))),
+                          Expanded(flex: 2, child: Text('HARGA (RP)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: context.colors.text))),
                           SizedBox(width: 16),
-                          Expanded(flex: 2, child: Text('JUMLAH (RP)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.text))),
-                          SizedBox(width: 60, child: Text('AKSI', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.text), textAlign: TextAlign.center)),
+                          Expanded(flex: 2, child: Text('JUMLAH (RP)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: context.colors.text))),
+                          SizedBox(width: 60, child: Text('AKSI', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: context.colors.text), textAlign: TextAlign.center)),
                         ],
                       ),
                     ),
-                    const Divider(height: 1, color: AppColors.border),
+                    Divider(height: 1, color: context.colors.border),
                     // Table Body List Rows
                     Expanded(
                       child: ListView.builder(
@@ -494,8 +492,8 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
                         itemBuilder: (context, index) {
                           final row = formState.rows[index];
                           return Container(
-                            decoration: const BoxDecoration(
-                              border: Border(bottom: BorderSide(color: AppColors.border, width: 0.5)),
+                            decoration: BoxDecoration(
+                              border: Border(bottom: BorderSide(color: context.colors.border, width: 0.5)),
                             ),
                             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                             child: InvoiceTableRowWidget(
@@ -536,15 +534,15 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
                         child: OutlinedButton.icon(
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.black,
-                            side: const BorderSide(color: AppColors.border),
+                            side: BorderSide(color: context.colors.border),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           ),
                           onPressed: () {
                             ref.read(invoiceFormProvider.notifier).addRow();
                           },
-                          icon: const Icon(Icons.add, size: 16),
-                          label: const Text('TAMBAH ITEM', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          icon: Icon(Icons.add, size: 16),
+                          label: Text('TAMBAH ITEM', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                         ),
                       ),
                     ),
@@ -552,7 +550,7 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
 
             // Bottom calculations section (Total Tagihan and Save/Print Action)
             Row(
@@ -568,43 +566,43 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
                         decoration: BoxDecoration(
                           color: Colors.grey.shade50,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.border),
+                          border: Border.all(color: context.colors.border),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
+                            Text(
                               'Total Tagihan',
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textLight),
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: context.colors.textLight),
                             ),
                             Text(
                               'Rp ${_formatCurrency(formState.totalTagihan)}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w800,
-                                color: AppColors.text,
+                                color: context.colors.text,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       // Save and layout PDF print button
                       SizedBox(
                         width: double.infinity,
                         height: 52,
                         child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.action,
+                            backgroundColor: context.colors.action,
                             foregroundColor: Colors.black,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             elevation: 0,
                           ),
                           onPressed: () => _simpanDanCetakInvoice(context),
-                          icon: const Icon(Icons.print, size: 18),
+                          icon: Icon(Icons.print, size: 18),
                           label: Text(
                             formState.isEditMode ? 'UPDATE & CETAK INVOICE' : 'SIMPAN & CETAK INVOICE',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                           ),
                         ),
                       ),
@@ -637,7 +635,7 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
 
       if (!rowsValid) {
         messenger.showSnackBar(
-          const SnackBar(content: Text('Mohon lengkapi seluruh baris item tagihan (program, hari mengaji, kuantitas > 0, harga > 0).')),
+          SnackBar(content: Text('Mohon lengkapi seluruh baris item tagihan (program, hari mengaji, kuantitas > 0, harga > 0).')),
         );
         return;
       }
@@ -666,18 +664,13 @@ class _InvoicePageState extends ConsumerState<InvoicePage> {
 
         ref.invalidate(transaksiListProvider);
 
-        // Save PDF locally and open it
-        final directory = await getApplicationDocumentsDirectory();
+        if (!context.mounted) return;
         final fileName = '${invoiceNo.replaceAll('/', '_')}_${formState.tagihanUntuk.replaceAll(' ', '_')}.pdf';
-        final filePath = '${directory.path}/$fileName';
-        final file = File(filePath);
-        await file.writeAsBytes(pdfBytes);
 
-        // Open PDF automatically
-        await OpenFilex.open(filePath);
-
+        await Printing.sharePdf(bytes: pdfBytes, filename: fileName);
+        
         messenger.showSnackBar(
-          SnackBar(content: Text(isEdit ? 'Invoice berhasil diperbarui!' : 'PDF berhasil disimpan di: $filePath')),
+          SnackBar(content: Text(isEdit ? 'Invoice berhasil diperbarui dan diunduh!' : 'Transaksi berhasil disimpan dan PDF diunduh!')),
         );
 
         // Reset form fields
@@ -822,10 +815,10 @@ class _InvoiceTableRowWidgetState extends State<InvoiceTableRowWidget> {
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<Program>(
-                hint: const Text('Pilih program...', style: TextStyle(fontSize: 13, color: AppColors.textLight)),
+                hint: Text('Pilih program...', style: TextStyle(fontSize: 13, color: context.colors.textLight)),
                 value: widget.row.program,
                 isExpanded: true,
-                style: const TextStyle(color: AppColors.text, fontSize: 14),
+                style: TextStyle(color: context.colors.text, fontSize: 14),
                 items: dropdownItems,
                 onChanged: (selection) {
                   if (selection == _addNewSentinel) {
@@ -838,7 +831,7 @@ class _InvoiceTableRowWidgetState extends State<InvoiceTableRowWidget> {
             ),
           ),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: 16),
         // Column 2: Hari Mengaji input
         Expanded(
           flex: 2,
@@ -846,10 +839,10 @@ class _InvoiceTableRowWidgetState extends State<InvoiceTableRowWidget> {
             controller: _hariController,
             decoration: InputDecoration(
               hintText: 'Misal: Selasa',
-              hintStyle: const TextStyle(fontSize: 13, color: AppColors.textLight),
+              hintStyle: TextStyle(fontSize: 13, color: context.colors.textLight),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               focusedBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                borderSide: BorderSide(color: context.colors.accent, width: 2),
                 borderRadius: BorderRadius.circular(8),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -857,7 +850,7 @@ class _InvoiceTableRowWidgetState extends State<InvoiceTableRowWidget> {
             onChanged: widget.onHariChanged,
           ),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: 16),
         // Column 3: Kuantitas Sesi input
         Expanded(
           flex: 2,
@@ -869,7 +862,7 @@ class _InvoiceTableRowWidgetState extends State<InvoiceTableRowWidget> {
               hintText: '0',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               focusedBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                borderSide: BorderSide(color: context.colors.accent, width: 2),
                 borderRadius: BorderRadius.circular(8),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -879,7 +872,7 @@ class _InvoiceTableRowWidgetState extends State<InvoiceTableRowWidget> {
             },
           ),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: 16),
         // Column 4: Harga input (Editable default)
         Expanded(
           flex: 2,
@@ -891,7 +884,7 @@ class _InvoiceTableRowWidgetState extends State<InvoiceTableRowWidget> {
               hintText: '0',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               focusedBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                borderSide: BorderSide(color: context.colors.accent, width: 2),
                 borderRadius: BorderRadius.circular(8),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -901,7 +894,7 @@ class _InvoiceTableRowWidgetState extends State<InvoiceTableRowWidget> {
             },
           ),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: 16),
         // Column 5: Subtotal
         Expanded(
           flex: 2,
@@ -910,20 +903,20 @@ class _InvoiceTableRowWidgetState extends State<InvoiceTableRowWidget> {
             child: Text(
               'Rp ${_formatCurrency(rowTotal)}',
               textAlign: TextAlign.right,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.text),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: context.colors.text),
             ),
           ),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: 16),
         // Delete button
         SizedBox(
           width: 44,
           child: widget.showDelete
               ? IconButton(
-                  icon: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
+                  icon: Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
                   onPressed: widget.onDelete,
                 )
-              : const SizedBox(),
+              : SizedBox(),
         ),
       ],
     );

@@ -7,7 +7,8 @@ import 'domain/entities/program.dart';
 import 'domain/entities/person.dart';
 import 'domain/entities/transaksi.dart';
 import 'presentation/pages/main_layout.dart';
-
+import 'presentation/providers/theme_provider.dart';
+import 'core/constants/colors.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -20,12 +21,22 @@ void main() async {
     Hive.registerAdapter(PersonAdapter());
     Hive.registerAdapter(TransaksiAdapter());
 
-    // Buka Box (Ini ibarat membuka/membuat tabel di dalam database)
-    await Hive.openBox<Program>('programBox');
-    await Hive.openBox<Person>('personBox');
-    await Hive.openBox<Transaksi>('transaksiBox');
+    await Hive.openBox<Program>('programBoxV2');
+    await Hive.openBox<Person>('personBoxV2');
+    await Hive.openBox<Transaksi>('transaksiBoxV2');
   } catch (e, stackTrace) {
     debugPrint('Error initializing Hive boxes: $e\n$stackTrace');
+    // Jika gagal buka (misal karena beda struktur data), hapus box lama lalu buat ulang
+    try {
+      await Hive.deleteBoxFromDisk('programBoxV2');
+      await Hive.deleteBoxFromDisk('personBoxV2');
+      await Hive.deleteBoxFromDisk('transaksiBoxV2');
+      await Hive.openBox<Program>('programBoxV2');
+      await Hive.openBox<Person>('personBoxV2');
+      await Hive.openBox<Transaksi>('transaksiBoxV2');
+    } catch (fallbackError) {
+      debugPrint('Tetap gagal setelah dihapus: $fallbackError');
+    }
   }
 
   runApp(
@@ -35,17 +46,30 @@ void main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'EduFinance',
+      themeMode: themeMode,
       theme: ThemeData(
-        primaryColor: const Color(0xFF001F3F), 
-        scaffoldBackgroundColor: Colors.white,
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: AppColors.light.background,
+        extensions: <ThemeExtension<dynamic>>[
+          AppColors.light,
+        ],
+      ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: AppColors.dark.background,
+        extensions: <ThemeExtension<dynamic>>[
+          AppColors.dark,
+        ],
       ),
       home: const MainLayout(),
     );

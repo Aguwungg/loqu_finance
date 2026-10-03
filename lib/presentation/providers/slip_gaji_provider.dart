@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import '../../domain/entities/program.dart';
@@ -7,7 +8,7 @@ import '../../data/repositories/transaksi_repository_impl.dart';
 
 // --- Transaksi Repositories & State Notifier Providers ---
 final transaksiRepositoryProvider = Provider<TransaksiRepository>((ref) {
-  return TransaksiRepositoryImpl(Hive.box<Transaksi>('transaksiBox'));
+  return TransaksiRepositoryImpl(Hive.box<Transaksi>('transaksiBoxV2'));
 });
 
 class TransaksiListNotifier extends StateNotifier<List<Transaksi>> {
@@ -58,6 +59,32 @@ class SlipGajiRowState {
     this.fee = 0,
   });
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'namaAnak': namaAnak,
+      'programId': program?.id,
+      'sesi': sesi,
+      'fee': fee,
+    };
+  }
+
+  factory SlipGajiRowState.fromJson(Map<String, dynamic> json, List<Program> allPrograms) {
+    Program? prog;
+    if (json['programId'] != null) {
+      try {
+        prog = allPrograms.firstWhere((p) => p.id == json['programId']);
+      } catch (_) {}
+    }
+    return SlipGajiRowState(
+      id: json['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      namaAnak: json['namaAnak'] ?? '',
+      program: prog,
+      sesi: json['sesi'] ?? 0,
+      fee: json['fee'] ?? 0,
+    );
+  }
+
   SlipGajiRowState copyWith({
     String? id,
     String? namaAnak,
@@ -85,6 +112,10 @@ class SlipGajiFormState {
   final List<SlipGajiRowState> rows;
   final int reimburse;
   final int subsidi;
+  final int potongan;
+  final String catatanSubsidi;
+  final String catatanReimburse;
+  final String catatanPotongan;
 
   SlipGajiFormState({
     this.transactionKey,
@@ -94,12 +125,16 @@ class SlipGajiFormState {
     this.rows = const [],
     this.reimburse = 0,
     this.subsidi = 0,
+    this.potongan = 0,
+    this.catatanSubsidi = '',
+    this.catatanReimburse = '',
+    this.catatanPotongan = '',
   });
 
   bool get isEditMode => transactionKey != null;
 
   int get subtotal => rows.fold(0, (sum, row) => sum + (row.sesi * row.fee));
-  int get totalPendapatan => subtotal + subsidi - reimburse;
+  int get totalPendapatan => subtotal + subsidi + reimburse - potongan;
 
   SlipGajiFormState copyWith({
     Object? transactionKey = _slipGajiSentinel,
@@ -109,6 +144,10 @@ class SlipGajiFormState {
     List<SlipGajiRowState>? rows,
     int? reimburse,
     int? subsidi,
+    int? potongan,
+    String? catatanSubsidi,
+    String? catatanReimburse,
+    String? catatanPotongan,
   }) {
     return SlipGajiFormState(
       transactionKey: identical(transactionKey, _slipGajiSentinel) ? this.transactionKey : transactionKey,
@@ -118,6 +157,10 @@ class SlipGajiFormState {
       rows: rows ?? this.rows,
       reimburse: reimburse ?? this.reimburse,
       subsidi: subsidi ?? this.subsidi,
+      potongan: potongan ?? this.potongan,
+      catatanSubsidi: catatanSubsidi ?? this.catatanSubsidi,
+      catatanReimburse: catatanReimburse ?? this.catatanReimburse,
+      catatanPotongan: catatanPotongan ?? this.catatanPotongan,
     );
   }
 }
@@ -197,6 +240,36 @@ class SlipGajiFormNotifier extends StateNotifier<SlipGajiFormState> {
 
   void updateSubsidi(int value) {
     state = state.copyWith(subsidi: value);
+  }
+
+  void updatePotongan(int value) {
+    state = state.copyWith(potongan: value);
+  }
+
+  void updateCatatanSubsidi(String value) {
+    state = state.copyWith(catatanSubsidi: value);
+  }
+
+  void updateCatatanReimburse(String value) {
+    state = state.copyWith(catatanReimburse: value);
+  }
+
+  void updateCatatanPotongan(String value) {
+    state = state.copyWith(catatanPotongan: value);
+  }
+
+  void loadFromPrevious(String jsonData, List<Program> allPrograms) {
+    try {
+      final List<dynamic> decoded = jsonDecode(jsonData);
+      final List<SlipGajiRowState> loadedRows = decoded
+          .map((e) => SlipGajiRowState.fromJson(e as Map<String, dynamic>, allPrograms))
+          .toList();
+      if (loadedRows.isNotEmpty) {
+        state = state.copyWith(rows: loadedRows);
+      }
+    } catch (e) {
+      // Ignore if failed to parse
+    }
   }
 
   void resetForm() {

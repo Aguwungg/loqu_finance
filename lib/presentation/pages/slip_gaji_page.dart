@@ -8,9 +8,8 @@ import '../../domain/entities/transaksi.dart';
 import '../providers/master_data_providers.dart';
 import '../providers/slip_gaji_provider.dart';
 import '../services/pdf_service.dart';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
-import 'package:open_filex/open_filex.dart';
+import 'package:printing/printing.dart';
+import 'dart:convert';
 
 class SlipGajiPage extends ConsumerStatefulWidget {
   const SlipGajiPage({super.key});
@@ -27,6 +26,10 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
   late TextEditingController _tanggalController;
   late TextEditingController _reimburseController;
   late TextEditingController _subsidiController;
+  late TextEditingController _potonganController;
+  late TextEditingController _catatanReimburseController;
+  late TextEditingController _catatanSubsidiController;
+  late TextEditingController _catatanPotonganController;
 
   @override
   void initState() {
@@ -37,6 +40,10 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
     _tanggalController = TextEditingController(text: _formatDate(formState.tanggalCetak));
     _reimburseController = TextEditingController(text: formState.reimburse == 0 ? '' : formState.reimburse.toString());
     _subsidiController = TextEditingController(text: formState.subsidi == 0 ? '' : formState.subsidi.toString());
+    _potonganController = TextEditingController(text: formState.potongan == 0 ? '' : formState.potongan.toString());
+    _catatanReimburseController = TextEditingController(text: formState.catatanReimburse);
+    _catatanSubsidiController = TextEditingController(text: formState.catatanSubsidi);
+    _catatanPotonganController = TextEditingController(text: formState.catatanPotongan);
   }
 
   @override
@@ -45,6 +52,10 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
     _tanggalController.dispose();
     _reimburseController.dispose();
     _subsidiController.dispose();
+    _potonganController.dispose();
+    _catatanReimburseController.dispose();
+    _catatanSubsidiController.dispose();
+    _catatanPotonganController.dispose();
     super.dispose();
   }
 
@@ -89,10 +100,10 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primary,
+            colorScheme: ColorScheme.light(
+              primary: context.colors.primary,
               onPrimary: Colors.white,
-              onSurface: AppColors.text,
+              onSurface: context.colors.text,
             ),
           ),
           child: child!,
@@ -131,6 +142,19 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
       if (nextSubsidiText != _subsidiController.text) {
         _subsidiController.text = nextSubsidiText;
       }
+      final nextPotonganText = next.potongan == 0 ? '' : next.potongan.toString();
+      if (nextPotonganText != _potonganController.text) {
+        _potonganController.text = nextPotonganText;
+      }
+      if (next.catatanReimburse != _catatanReimburseController.text) {
+        _catatanReimburseController.text = next.catatanReimburse;
+      }
+      if (next.catatanSubsidi != _catatanSubsidiController.text) {
+        _catatanSubsidiController.text = next.catatanSubsidi;
+      }
+      if (next.catatanPotongan != _catatanPotonganController.text) {
+        _catatanPotonganController.text = next.catatanPotongan;
+      }
     });
 
     return Padding(
@@ -150,18 +174,18 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
                     children: [
                       Text(
                         formState.isEditMode ? 'Edit Slip Gaji Pengajar' : 'Buat Slip Gaji Pengajar',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.text,
+                          color: context.colors.text,
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      const Text(
+                      SizedBox(height: 6),
+                      Text(
                         'Formulir untuk menghasilkan slip gaji pengajar berdasarkan sesi mengajar.',
                         style: TextStyle(
                           fontSize: 14,
-                          color: AppColors.textLight,
+                          color: context.colors.textLight,
                         ),
                       ),
                     ],
@@ -173,18 +197,18 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
                   decoration: BoxDecoration(
                     color: Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: context.colors.border),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.calendar_today_outlined, size: 16, color: AppColors.text),
-                      const SizedBox(width: 8),
+                      Icon(Icons.calendar_today_outlined, size: 16, color: context.colors.text),
+                      SizedBox(width: 8),
                       Text(
                         _getActiveMonth(),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.text,
+                          color: context.colors.text,
                         ),
                       ),
                     ],
@@ -192,7 +216,7 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
 
             // Top Inputs (Pengajar, Tanggal Cetak)
             Row(
@@ -202,11 +226,11 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'NAMA PENGAJAR',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.text),
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: context.colors.text),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Autocomplete<Person>(
                         initialValue: TextEditingValue(text: formState.namaPengajar),
                         optionsBuilder: (TextEditingValue textEditingValue) {
@@ -221,6 +245,27 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
                         onSelected: (Person selection) {
                           ref.read(slipGajiFormProvider.notifier).updateNamaPengajar(selection.nama);
                           _pengajarController.text = selection.nama;
+
+                          // Auto-fill dari riwayat bulan lalu
+                          final transactions = ref.read(transaksiListProvider);
+                          final riwayat = transactions.where((t) => 
+                            t.jenis == 'Slip Gaji' && 
+                            t.namaTarget == selection.nama && 
+                            t.rowsData != null && 
+                            t.rowsData!.isNotEmpty
+                          ).toList();
+
+                          if (riwayat.isNotEmpty) {
+                            riwayat.sort((a, b) => b.tanggal.compareTo(a.tanggal));
+                            final latest = riwayat.first;
+                            ref.read(slipGajiFormProvider.notifier).loadFromPrevious(latest.rowsData!, allPrograms);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Berhasil menyalin riwayat mengajar dari slip gaji sebelumnya (${_formatDate(latest.tanggal)}).'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          }
                         },
                         fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
                           // Sync initial/state value
@@ -235,15 +280,15 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
                             },
                             decoration: InputDecoration(
                               hintText: 'Cari nama pengajar...',
-                              hintStyle: const TextStyle(fontSize: 14, color: AppColors.textLight),
-                              prefixIcon: const Icon(Icons.search, size: 20, color: AppColors.textLight),
+                              hintStyle: TextStyle(fontSize: 14, color: context.colors.textLight),
+                              prefixIcon: Icon(Icons.search, size: 20, color: context.colors.textLight),
                               focusedBorder: OutlineInputBorder(
-                                borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                                borderSide: BorderSide(color: context.colors.accent, width: 2),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
-                                borderSide: const BorderSide(color: AppColors.border),
+                                borderSide: BorderSide(color: context.colors.border),
                               ),
                             ),
                             validator: (value) => value == null || value.trim().isEmpty ? 'Nama pengajar wajib diisi' : null,
@@ -253,31 +298,31 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
                     ],
                   ),
                 ),
-                const SizedBox(width: 24),
+                SizedBox(width: 24),
                 // Tanggal Cetak Picker
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'TANGGAL CETAK',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.text),
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: context.colors.text),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       TextFormField(
                         controller: _tanggalController,
                         readOnly: true,
                         onTap: () => _selectDate(context),
                         decoration: InputDecoration(
                           hintText: 'mm/dd/yyyy',
-                          suffixIcon: const Icon(Icons.calendar_today, size: 18, color: AppColors.textLight),
+                          suffixIcon: Icon(Icons.calendar_today, size: 18, color: context.colors.textLight),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                            borderSide: BorderSide(color: context.colors.accent, width: 2),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: AppColors.border),
+                            borderSide: BorderSide(color: context.colors.border),
                           ),
                         ),
                       ),
@@ -286,14 +331,14 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
 
             // Teaching Input Section Header
-            const Text(
+            Text(
               'Input Mengajar',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.text),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.colors.text),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
 
             // Dynamic Table Area
             Expanded(
@@ -301,31 +346,31 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: context.colors.border),
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: Column(
                   children: [
                     // Table Header Column Labels
                     Container(
-                      color: AppColors.tableHeader,
+                      color: context.colors.tableHeader,
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                       child: Row(
-                        children: const [
-                          Expanded(flex: 3, child: Text('NAMA ANAK', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.text))),
+                        children: [
+                          Expanded(flex: 3, child: Text('NAMA ANAK', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: context.colors.text))),
                           SizedBox(width: 16),
-                          Expanded(flex: 3, child: Text('PROGRAM', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.text))),
+                          Expanded(flex: 3, child: Text('PROGRAM', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: context.colors.text))),
                           SizedBox(width: 16),
-                          Expanded(flex: 2, child: Text('JUMLAH (SESI)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.text))),
+                          Expanded(flex: 2, child: Text('JUMLAH (SESI)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: context.colors.text))),
                           SizedBox(width: 16),
-                          Expanded(flex: 2, child: Text('FEE (RP)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.text))),
+                          Expanded(flex: 2, child: Text('FEE (RP)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: context.colors.text))),
                           SizedBox(width: 16),
-                          Expanded(flex: 2, child: Text('TOTAL (RP)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.text))),
-                          SizedBox(width: 60, child: Text('AKSI', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.text), textAlign: TextAlign.center)),
+                          Expanded(flex: 2, child: Text('TOTAL (RP)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: context.colors.text))),
+                          SizedBox(width: 60, child: Text('AKSI', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: context.colors.text), textAlign: TextAlign.center)),
                         ],
                       ),
                     ),
-                    const Divider(height: 1, color: AppColors.border),
+                    Divider(height: 1, color: context.colors.border),
                     // Table Body List Rows
                     Expanded(
                       child: ListView.builder(
@@ -333,8 +378,8 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
                         itemBuilder: (context, index) {
                           final row = formState.rows[index];
                           return Container(
-                            decoration: const BoxDecoration(
-                              border: Border(bottom: BorderSide(color: AppColors.border, width: 0.5)),
+                            decoration: BoxDecoration(
+                              border: Border(bottom: BorderSide(color: context.colors.border, width: 0.5)),
                             ),
                             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                             child: TableRowWidget(
@@ -370,15 +415,15 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
                         child: OutlinedButton.icon(
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.black,
-                            side: const BorderSide(color: AppColors.border),
+                            side: BorderSide(color: context.colors.border),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           ),
                           onPressed: () {
                             ref.read(slipGajiFormProvider.notifier).addRow();
                           },
-                          icon: const Icon(Icons.add, size: 16),
-                          label: const Text('TAMBAH BARIS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          icon: Icon(Icons.add, size: 16),
+                          label: Text('TAMBAH BARIS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                         ),
                       ),
                     ),
@@ -386,7 +431,7 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
 
             // Bottom calculations section (Reimburse, Subsidi, and Grand Total)
             Row(
@@ -402,61 +447,154 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Reimburse (Rp)',
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.text),
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: context.colors.text),
                             ),
-                            const SizedBox(height: 8),
+                            SizedBox(height: 8),
                             TextFormField(
                               controller: _reimburseController,
                               keyboardType: TextInputType.number,
                               decoration: InputDecoration(
                                 hintText: '0',
-                                prefixIcon: const Icon(Icons.receipt_long_outlined, size: 18, color: AppColors.textLight),
+                                prefixIcon: Icon(Icons.receipt_long_outlined, size: 18, color: context.colors.textLight),
                                 focusedBorder: OutlineInputBorder(
-                                  borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                                  borderSide: BorderSide(color: context.colors.accent, width: 2),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: const BorderSide(color: AppColors.border),
+                                  borderSide: BorderSide(color: context.colors.border),
                                 ),
                               ),
                               onChanged: (val) {
                                 ref.read(slipGajiFormProvider.notifier).updateReimburse(int.tryParse(val) ?? 0);
                               },
                             ),
+                            SizedBox(height: 8),
+                            TextFormField(
+                              controller: _catatanReimburseController,
+                              decoration: InputDecoration(
+                                hintText: 'Catatan reimburse...',
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: context.colors.accent, width: 2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(color: context.colors.border),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              ),
+                              style: TextStyle(fontSize: 12),
+                              onChanged: (val) {
+                                ref.read(slipGajiFormProvider.notifier).updateCatatanReimburse(val);
+                              },
+                            ),
                           ],
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      SizedBox(width: 16),
                       // Subsidi input
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Subsidi (Rp)',
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.text),
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: context.colors.text),
                             ),
-                            const SizedBox(height: 8),
+                            SizedBox(height: 8),
                             TextFormField(
                               controller: _subsidiController,
                               keyboardType: TextInputType.number,
                               decoration: InputDecoration(
                                 hintText: '0',
-                                prefixIcon: const Icon(Icons.monetization_on_outlined, size: 18, color: AppColors.textLight),
+                                prefixIcon: Icon(Icons.monetization_on_outlined, size: 18, color: context.colors.textLight),
                                 focusedBorder: OutlineInputBorder(
-                                  borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                                  borderSide: BorderSide(color: context.colors.accent, width: 2),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: const BorderSide(color: AppColors.border),
+                                  borderSide: BorderSide(color: context.colors.border),
                                 ),
                               ),
                               onChanged: (val) {
                                 ref.read(slipGajiFormProvider.notifier).updateSubsidi(int.tryParse(val) ?? 0);
+                              },
+                            ),
+                            SizedBox(height: 8),
+                            TextFormField(
+                              controller: _catatanSubsidiController,
+                              decoration: InputDecoration(
+                                hintText: 'Catatan subsidi...',
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: context.colors.accent, width: 2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(color: context.colors.border),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              ),
+                              style: TextStyle(fontSize: 12),
+                              onChanged: (val) {
+                                ref.read(slipGajiFormProvider.notifier).updateCatatanSubsidi(val);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(width: 16),
+                      // Potongan input
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Potongan (Rp)',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: context.colors.text),
+                            ),
+                            SizedBox(height: 8),
+                            TextFormField(
+                              controller: _potonganController,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                hintText: '0',
+                                prefixIcon: Icon(Icons.money_off_outlined, size: 18, color: context.colors.textLight),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: context.colors.accent, width: 2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(color: context.colors.border),
+                                ),
+                              ),
+                              onChanged: (val) {
+                                ref.read(slipGajiFormProvider.notifier).updatePotongan(int.tryParse(val) ?? 0);
+                              },
+                            ),
+                            SizedBox(height: 8),
+                            TextFormField(
+                              controller: _catatanPotonganController,
+                              decoration: InputDecoration(
+                                hintText: 'Catatan potongan...',
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: context.colors.accent, width: 2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(color: context.colors.border),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              ),
+                              style: TextStyle(fontSize: 12),
+                              onChanged: (val) {
+                                ref.read(slipGajiFormProvider.notifier).updateCatatanPotongan(val);
                               },
                             ),
                           ],
@@ -465,7 +603,7 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
                     ],
                   ),
                 ),
-                const SizedBox(width: 48),
+                SizedBox(width: 48),
                 // Total panel & Save print action button
                 Expanded(
                   flex: 3,
@@ -477,43 +615,43 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
                         decoration: BoxDecoration(
                           color: Colors.grey.shade50,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.border),
+                          border: Border.all(color: context.colors.border),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
+                            Text(
                               'Total Pendapatan',
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textLight),
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: context.colors.textLight),
                             ),
                             Text(
                               'Rp ${_formatCurrency(formState.totalPendapatan)}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w800,
-                                color: AppColors.text,
+                                color: context.colors.text,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       // Save and layout PDF print button
                       SizedBox(
                         width: double.infinity,
                         height: 52,
                         child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.action,
+                            backgroundColor: context.colors.action,
                             foregroundColor: Colors.black,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             elevation: 0,
                           ),
                           onPressed: () => _simpanDanCetakPDF(context),
-                          icon: const Icon(Icons.print, size: 18),
+                          icon: Icon(Icons.print, size: 18),
                           label: Text(
                             formState.isEditMode ? 'UPDATE & CETAK PDF' : 'SIMPAN & CETAK PDF',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                           ),
                         ),
                       ),
@@ -521,6 +659,15 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
                   ),
                 ),
               ],
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Note:\n- Subsidi: Tambahan penghasilan/bonus\n- Reimburse: Penggantian uang\n- Potongan: Pengurangan dana',
+              style: TextStyle(
+                fontSize: 12,
+                color: context.colors.textLight,
+                fontStyle: FontStyle.italic,
+              ),
             ),
           ],
         ),
@@ -545,7 +692,7 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
 
       if (!rowsValid) {
         messenger.showSnackBar(
-          const SnackBar(content: Text('Mohon lengkapi seluruh baris input mengajar (nama anak, program, sesi > 0, fee > 0).')),
+          SnackBar(content: Text('Mohon lengkapi seluruh baris input mengajar (nama anak, program, sesi > 0, fee > 0).')),
         );
         return;
       }
@@ -557,6 +704,9 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
         final isEdit = formState.isEditMode;
         final txId = formState.transactionId ?? (isEdit ? formState.transactionKey.toString() : DateTime.now().millisecondsSinceEpoch.toString());
 
+        // Generate JSON for rows
+        final rowsJsonData = jsonEncode(formState.rows.map((r) => r.toJson()).toList());
+
         // Save or update Transaction record in Hive
         final transaksiData = Transaksi(
           id: txId,
@@ -564,6 +714,10 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
           jenis: 'Slip Gaji',
           namaTarget: formState.namaPengajar,
           total: formState.totalPendapatan,
+          rowsData: rowsJsonData,
+          catatanSubsidi: formState.catatanSubsidi,
+          catatanReimburse: formState.catatanReimburse,
+          catatanPotongan: formState.catatanPotongan,
         );
 
         if (isEdit) {
@@ -574,18 +728,13 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
 
         ref.invalidate(transaksiListProvider);
 
-        // Save PDF locally and open it
-        final directory = await getApplicationDocumentsDirectory();
+        if (!context.mounted) return;
         final fileName = 'SlipGaji_${formState.namaPengajar.replaceAll(' ', '_')}_${_formatDate(formState.tanggalCetak).replaceAll('/', '-')}.pdf';
-        final filePath = '${directory.path}/$fileName';
-        final file = File(filePath);
-        await file.writeAsBytes(pdfBytes);
-
-        // Open PDF automatically
-        await OpenFilex.open(filePath);
-
+        
+        await Printing.sharePdf(bytes: pdfBytes, filename: fileName);
+        
         messenger.showSnackBar(
-          SnackBar(content: Text(isEdit ? 'Slip gaji berhasil diperbarui!' : 'PDF berhasil disimpan di: $filePath')),
+          SnackBar(content: Text(isEdit ? 'Slip gaji berhasil diperbarui dan diunduh!' : 'Transaksi berhasil disimpan dan PDF diunduh!')),
         );
 
         // Reset form fields
@@ -593,6 +742,7 @@ class _SlipGajiPageState extends ConsumerState<SlipGajiPage> {
         _pengajarController.clear();
         _reimburseController.clear();
         _subsidiController.clear();
+        _potonganController.clear();
         _tanggalController.text = _formatDate(DateTime.now());
       } catch (e, stackTrace) {
         debugPrint('Error saving/printing slip gaji: $e\n$stackTrace');
@@ -718,10 +868,10 @@ class _TableRowWidgetState extends State<TableRowWidget> {
                 onChanged: widget.onAnakChanged,
                 decoration: InputDecoration(
                   hintText: 'Nama anak...',
-                  hintStyle: const TextStyle(fontSize: 13, color: AppColors.textLight),
+                  hintStyle: TextStyle(fontSize: 13, color: context.colors.textLight),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                   focusedBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                    borderSide: BorderSide(color: context.colors.accent, width: 2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -730,7 +880,7 @@ class _TableRowWidgetState extends State<TableRowWidget> {
             },
           ),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: 16),
         // Column 2: Dropdown Program
         Expanded(
           flex: 3,
@@ -743,10 +893,10 @@ class _TableRowWidgetState extends State<TableRowWidget> {
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<Program>(
-                hint: const Text('Pilih program...', style: TextStyle(fontSize: 13, color: AppColors.textLight)),
+                hint: Text('Pilih program...', style: TextStyle(fontSize: 13, color: context.colors.textLight)),
                 value: widget.row.program,
                 isExpanded: true,
-                style: const TextStyle(color: AppColors.text, fontSize: 14),
+                style: TextStyle(color: context.colors.text, fontSize: 14),
                 items: widget.programs.map((prog) {
                   return DropdownMenuItem<Program>(
                     value: prog,
@@ -758,7 +908,7 @@ class _TableRowWidgetState extends State<TableRowWidget> {
             ),
           ),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: 16),
         // Column 3: Sesi Count TextField
         Expanded(
           flex: 2,
@@ -770,7 +920,7 @@ class _TableRowWidgetState extends State<TableRowWidget> {
               hintText: '0',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               focusedBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                borderSide: BorderSide(color: context.colors.accent, width: 2),
                 borderRadius: BorderRadius.circular(8),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -780,7 +930,7 @@ class _TableRowWidgetState extends State<TableRowWidget> {
             },
           ),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: 16),
         // Column 4: Fee TextField (Editable default program fee)
         Expanded(
           flex: 2,
@@ -792,7 +942,7 @@ class _TableRowWidgetState extends State<TableRowWidget> {
               hintText: '0',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               focusedBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                borderSide: BorderSide(color: context.colors.accent, width: 2),
                 borderRadius: BorderRadius.circular(8),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -802,7 +952,7 @@ class _TableRowWidgetState extends State<TableRowWidget> {
             },
           ),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: 16),
         // Column 5: Total Sesi Price Text
         Expanded(
           flex: 2,
@@ -811,20 +961,20 @@ class _TableRowWidgetState extends State<TableRowWidget> {
             child: Text(
               'Rp ${_formatCurrency(rowTotal)}',
               textAlign: TextAlign.right,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.text),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: context.colors.text),
             ),
           ),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: 16),
         // Delete button
         SizedBox(
           width: 44,
           child: widget.showDelete
               ? IconButton(
-                  icon: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
+                  icon: Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
                   onPressed: widget.onDelete,
                 )
-              : const SizedBox(),
+              : SizedBox(),
         ),
       ],
     );

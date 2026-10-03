@@ -82,7 +82,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(
             isEdit ? 'Edit Program' : 'Tambah Program Baru',
-            style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.text),
+            style: TextStyle(fontWeight: FontWeight.bold, color: context.colors.text),
           ),
           content: Form(
             key: formKey,
@@ -97,7 +97,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                       labelText: 'Nama Program',
                       hintText: 'Masukkan nama program (misal: Reguler Offline)',
                       focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                        borderSide: BorderSide(color: context.colors.accent, width: 2),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       border: OutlineInputBorder(
@@ -106,7 +106,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                     ),
                     validator: (value) => value == null || value.trim().isEmpty ? 'Nama program tidak boleh kosong' : null,
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   TextFormField(
                     controller: feeController,
                     keyboardType: TextInputType.number,
@@ -114,7 +114,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                       labelText: 'Standar Fee Pengajar (Rp)',
                       hintText: 'Masukkan nominal fee pengajar (misal: 150000)',
                       focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                        borderSide: BorderSide(color: context.colors.accent, width: 2),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       border: OutlineInputBorder(
@@ -131,7 +131,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   TextFormField(
                     controller: hargaController,
                     keyboardType: TextInputType.number,
@@ -139,7 +139,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                       labelText: 'Standar Harga Klien (Rp)',
                       hintText: 'Masukkan nominal tagihan klien (misal: 200000)',
                       focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                        borderSide: BorderSide(color: context.colors.accent, width: 2),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       border: OutlineInputBorder(
@@ -163,11 +163,11 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Batal', style: TextStyle(color: AppColors.textLight)),
+              child: Text('Batal', style: TextStyle(color: context.colors.textLight)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: context.colors.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -187,18 +187,18 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                   if (isEdit) {
                     await ref.read(programListProvider.notifier).updateProgram(newProgram);
                     messenger.showSnackBar(
-                      const SnackBar(content: Text('Program berhasil diperbarui!')),
+                      SnackBar(content: Text('Program berhasil diperbarui!')),
                     );
                   } else {
                     await ref.read(programListProvider.notifier).addProgram(newProgram);
                     messenger.showSnackBar(
-                      const SnackBar(content: Text('Program berhasil ditambahkan!')),
+                      SnackBar(content: Text('Program berhasil ditambahkan!')),
                     );
                   }
                   navigator.pop();
                 }
               },
-              child: const Text('Simpan'),
+              child: Text('Simpan'),
             ),
           ],
         );
@@ -224,7 +224,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               title: Text(
                 isEdit ? 'Edit Data $kategori' : 'Tambah $kategori Baru',
-                style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.text),
+                style: TextStyle(fontWeight: FontWeight.bold, color: context.colors.text),
               ),
               content: Form(
                 key: formKey,
@@ -239,7 +239,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                           labelText: 'Nama Lengkap',
                           hintText: 'Masukkan nama $kategori',
                           focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                            borderSide: BorderSide(color: context.colors.accent, width: 2),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           border: OutlineInputBorder(
@@ -249,14 +249,14 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                         validator: (value) => value == null || value.trim().isEmpty ? 'Nama tidak boleh kosong' : null,
                       ),
                       if (kategori == 'Murid') ...[
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
                         DropdownButtonFormField<String>(
                           initialValue: selectedParentId,
                           decoration: InputDecoration(
                             labelText: 'Orang Tua',
                             hintText: 'Pilih Orang Tua',
                             focusedBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                              borderSide: BorderSide(color: context.colors.accent, width: 2),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             border: OutlineInputBorder(
@@ -289,11 +289,11 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Batal', style: TextStyle(color: AppColors.textLight)),
+                  child: Text('Batal', style: TextStyle(color: context.colors.textLight)),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: context.colors.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -324,7 +324,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                       navigator.pop();
                     }
                   },
-                  child: const Text('Simpan'),
+                  child: Text('Simpan'),
                 ),
               ],
             );
@@ -344,12 +344,12 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
       builder: (context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Konfirmasi Hapus', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+          title: Text('Konfirmasi Hapus', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
           content: Text('Apakah Anda yakin ingin menghapus $typeName "$name"? Data yang dihapus tidak bisa dikembalikan.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Batal', style: TextStyle(color: AppColors.textLight)),
+              child: Text('Batal', style: TextStyle(color: context.colors.textLight)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -371,7 +371,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                   SnackBar(content: Text('$typeName "$name" berhasil dihapus!')),
                 );
               },
-              child: const Text('Hapus'),
+              child: Text('Hapus'),
             ),
           ],
         );
@@ -387,26 +387,26 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header Judul Halaman
-          const Text(
+          Text(
             'Kelola Data Master',
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: AppColors.text,
+              color: context.colors.text,
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
 
           // Tab Bar Navigation
           TabBar(
             controller: _tabController,
             isScrollable: true,
-            labelColor: AppColors.primary,
-            unselectedLabelColor: AppColors.textLight,
-            indicatorColor: AppColors.primary,
+            labelColor: context.colors.primary,
+            unselectedLabelColor: context.colors.textLight,
+            indicatorColor: context.colors.primary,
             indicatorWeight: 3,
-            labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 15),
+            labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            unselectedLabelStyle: TextStyle(fontWeight: FontWeight.normal, fontSize: 15),
             tabs: const [
               Tab(text: 'Data Pengajar'),
               Tab(text: 'Data Murid'),
@@ -414,8 +414,8 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
               Tab(text: 'Data Program'),
             ],
           ),
-          const Divider(height: 1, color: AppColors.border),
-          const SizedBox(height: 24),
+          Divider(height: 1, color: context.colors.border),
+          SizedBox(height: 24),
 
           // Controls Area (Search & Add Button)
           Container(
@@ -423,7 +423,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: context.colors.border),
             ),
             child: Row(
               children: [
@@ -434,7 +434,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.border),
+                      border: Border.all(color: context.colors.border),
                     ),
                     child: TextField(
                       controller: _searchController,
@@ -453,19 +453,19 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                                 : _activeTab == 2
                                     ? 'Cari nama orang tua...'
                                     : 'Cari nama program...',
-                        hintStyle: const TextStyle(fontSize: 14, color: AppColors.textLight),
-                        prefixIcon: const Icon(Icons.search, size: 20, color: AppColors.textLight),
+                        hintStyle: TextStyle(fontSize: 14, color: context.colors.textLight),
+                        prefixIcon: Icon(Icons.search, size: 20, color: context.colors.textLight),
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(vertical: 10),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 // Add Button
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.action,
+                    backgroundColor: context.colors.action,
                     foregroundColor: Colors.black,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
@@ -484,7 +484,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                       _showProgramDialog();
                     }
                   },
-                  icon: const Icon(Icons.add, size: 18),
+                  icon: Icon(Icons.add, size: 18),
                   label: Text(
                     _activeTab == 0
                         ? 'Tambah Pengajar Baru'
@@ -493,13 +493,13 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                             : _activeTab == 2
                                 ? 'Tambah Orang Tua Baru'
                                 : 'Tambah Program Baru',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
           // Main data tables list with Tabs
           Expanded(
@@ -561,16 +561,16 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
             TableRow(
               children: [
                 _buildTableCell(
-                  child: const Padding(
+                  child: Padding(
                     padding: EdgeInsets.all(24.0),
                     child: Text(
                       'Tidak ada data pengajar.',
-                      style: TextStyle(color: AppColors.textLight, fontStyle: FontStyle.italic),
+                      style: TextStyle(color: context.colors.textLight, fontStyle: FontStyle.italic),
                     ),
                   ),
                 ),
-                _buildTableCell(child: const SizedBox()),
-                _buildTableCell(child: const SizedBox()),
+                _buildTableCell(child: SizedBox()),
+                _buildTableCell(child: SizedBox()),
               ],
             )
           else
@@ -582,7 +582,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
                       child: Text(
                         person.nama,
-                        style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.text, fontSize: 15),
+                        style: TextStyle(fontWeight: FontWeight.w600, color: context.colors.text, fontSize: 15),
                       ),
                     ),
                   ),
@@ -591,7 +591,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
                       child: Text(
                         person.kategori,
-                        style: const TextStyle(color: AppColors.textLight, fontSize: 14),
+                        style: TextStyle(color: context.colors.textLight, fontSize: 14),
                       ),
                     ),
                   ),
@@ -600,11 +600,11 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 20),
+                          icon: Icon(Icons.edit_outlined, color: Colors.blue, size: 20),
                           onPressed: () => _showPersonDialog(person: person, kategori: 'Pengajar'),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
+                          icon: Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
                           onPressed: () => _showDeleteConfirmation(person, false),
                         ),
                       ],
@@ -661,16 +661,16 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
             TableRow(
               children: [
                 _buildTableCell(
-                  child: const Padding(
+                  child: Padding(
                     padding: EdgeInsets.all(24.0),
                     child: Text(
                       'Tidak ada data murid.',
-                      style: TextStyle(color: AppColors.textLight, fontStyle: FontStyle.italic),
+                      style: TextStyle(color: context.colors.textLight, fontStyle: FontStyle.italic),
                     ),
                   ),
                 ),
-                _buildTableCell(child: const SizedBox()),
-                _buildTableCell(child: const SizedBox()),
+                _buildTableCell(child: SizedBox()),
+                _buildTableCell(child: SizedBox()),
               ],
             )
           else
@@ -688,7 +688,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
                       child: Text(
                         person.nama,
-                        style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.text, fontSize: 15),
+                        style: TextStyle(fontWeight: FontWeight.w600, color: context.colors.text, fontSize: 15),
                       ),
                     ),
                   ),
@@ -697,7 +697,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
                       child: Text(
                         parent.nama,
-                        style: const TextStyle(color: AppColors.textLight, fontSize: 14),
+                        style: TextStyle(color: context.colors.textLight, fontSize: 14),
                       ),
                     ),
                   ),
@@ -706,11 +706,11 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 20),
+                          icon: Icon(Icons.edit_outlined, color: Colors.blue, size: 20),
                           onPressed: () => _showPersonDialog(person: person, kategori: 'Murid'),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
+                          icon: Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
                           onPressed: () => _showDeleteConfirmation(person, false),
                         ),
                       ],
@@ -767,16 +767,16 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
             TableRow(
               children: [
                 _buildTableCell(
-                  child: const Padding(
+                  child: Padding(
                     padding: EdgeInsets.all(24.0),
                     child: Text(
                       'Tidak ada data orang tua.',
-                      style: TextStyle(color: AppColors.textLight, fontStyle: FontStyle.italic),
+                      style: TextStyle(color: context.colors.textLight, fontStyle: FontStyle.italic),
                     ),
                   ),
                 ),
-                _buildTableCell(child: const SizedBox()),
-                _buildTableCell(child: const SizedBox()),
+                _buildTableCell(child: SizedBox()),
+                _buildTableCell(child: SizedBox()),
               ],
             )
           else
@@ -788,7 +788,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
                       child: Text(
                         person.nama,
-                        style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.text, fontSize: 15),
+                        style: TextStyle(fontWeight: FontWeight.w600, color: context.colors.text, fontSize: 15),
                       ),
                     ),
                   ),
@@ -797,7 +797,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
                       child: Text(
                         person.kategori,
-                        style: const TextStyle(color: AppColors.textLight, fontSize: 14),
+                        style: TextStyle(color: context.colors.textLight, fontSize: 14),
                       ),
                     ),
                   ),
@@ -806,11 +806,11 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 20),
+                          icon: Icon(Icons.edit_outlined, color: Colors.blue, size: 20),
                           onPressed: () => _showPersonDialog(person: person, kategori: 'Orang Tua'),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
+                          icon: Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
                           onPressed: () => _showDeleteConfirmation(person, false),
                         ),
                       ],
@@ -873,17 +873,17 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
             TableRow(
               children: [
                 _buildTableCell(
-                  child: const Padding(
+                  child: Padding(
                     padding: EdgeInsets.all(24.0),
                     child: Text(
                       'Tidak ada data program.',
-                      style: TextStyle(color: AppColors.textLight, fontStyle: FontStyle.italic),
+                      style: TextStyle(color: context.colors.textLight, fontStyle: FontStyle.italic),
                     ),
                   ),
                 ),
-                _buildTableCell(child: const SizedBox()),
-                _buildTableCell(child: const SizedBox()),
-                _buildTableCell(child: const SizedBox()),
+                _buildTableCell(child: SizedBox()),
+                _buildTableCell(child: SizedBox()),
+                _buildTableCell(child: SizedBox()),
               ],
             )
           else
@@ -895,7 +895,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
                       child: Text(
                         program.namaProgram,
-                        style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.text, fontSize: 15),
+                        style: TextStyle(fontWeight: FontWeight.w600, color: context.colors.text, fontSize: 15),
                       ),
                     ),
                   ),
@@ -904,7 +904,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
                       child: Text(
                         'Rp ${_formatCurrency(program.defaultFeePengajar)}',
-                        style: const TextStyle(fontWeight: FontWeight.w500, color: AppColors.text, fontSize: 14),
+                        style: TextStyle(fontWeight: FontWeight.w500, color: context.colors.text, fontSize: 14),
                       ),
                     ),
                   ),
@@ -913,7 +913,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
                       child: Text(
                         'Rp ${_formatCurrency(program.defaultHargaKlien)}',
-                        style: const TextStyle(fontWeight: FontWeight.w500, color: AppColors.text, fontSize: 14),
+                        style: TextStyle(fontWeight: FontWeight.w500, color: context.colors.text, fontSize: 14),
                       ),
                     ),
                   ),
@@ -922,11 +922,11 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 20),
+                          icon: Icon(Icons.edit_outlined, color: Colors.blue, size: 20),
                           onPressed: () => _showProgramDialog(program: program),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
+                          icon: Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
                           onPressed: () => _showDeleteConfirmation(program, true),
                         ),
                       ],
@@ -950,8 +950,8 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
 
   TableRow _buildTableHeaderRow(List<String> headings) {
     return TableRow(
-      decoration: const BoxDecoration(
-        color: AppColors.tableHeader,
+      decoration: BoxDecoration(
+        color: context.colors.tableHeader,
       ),
       children: headings.map((title) {
         final isActions = title == 'AKSI';
@@ -962,9 +962,9 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
             child: Text(
               title,
               textAlign: isActions ? TextAlign.center : TextAlign.left,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: AppColors.text,
+                color: context.colors.text,
                 fontSize: 12,
                 letterSpacing: 0.5,
               ),
@@ -990,7 +990,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.colors.border),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -1006,10 +1006,10 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
           // Pagination Footer
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: Colors.white,
               border: Border(
-                top: BorderSide(color: AppColors.border, width: 1),
+                top: BorderSide(color: context.colors.border, width: 1),
               ),
             ),
             child: Row(
@@ -1020,7 +1020,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                   totalItems == 0
                       ? 'Menampilkan 0-0 dari 0 data'
                       : 'Menampilkan ${startIndex + 1}-$endIndex dari $totalItems data',
-                  style: const TextStyle(fontSize: 13, color: AppColors.textLight),
+                  style: TextStyle(fontSize: 13, color: context.colors.textLight),
                 ),
                 
                 // Pagination Buttons
@@ -1033,7 +1033,7 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                         isEnabled: currentPage > 1,
                         onPressed: () => onPageChanged(currentPage - 1),
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       // Page numbers
                       ...List.generate(totalPages, (index) {
                         final pageNum = index + 1;
@@ -1057,14 +1057,14 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                  color: isSelected ? Colors.white : AppColors.text,
+                                  color: isSelected ? Colors.white : context.colors.text,
                                 ),
                               ),
                             ),
                           ),
                         );
                       }),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       // Next button
                       _buildPageArrow(
                         icon: Icons.chevron_right_rounded,
@@ -1094,13 +1094,13 @@ class _MasterDataPageState extends ConsumerState<MasterDataPage> with SingleTick
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(4),
           border: Border.all(
-            color: isEnabled ? AppColors.border : AppColors.border.withAlpha(128),
+            color: isEnabled ? context.colors.border : context.colors.border.withAlpha(128),
           ),
         ),
         child: Icon(
           icon,
           size: 18,
-          color: isEnabled ? AppColors.text : AppColors.textLight.withAlpha(77),
+          color: isEnabled ? context.colors.text : context.colors.textLight.withAlpha(77),
         ),
       ),
     );

@@ -5,14 +5,17 @@ import 'slip_gaji_page.dart';
 import 'invoice_page.dart';
 import '../../core/constants/colors.dart';
 
-class MainLayout extends StatefulWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/theme_provider.dart';
+
+class MainLayout extends ConsumerStatefulWidget {
   const MainLayout({super.key});
 
   @override
-  State<MainLayout> createState() => _MainLayoutState();
+  ConsumerState<MainLayout> createState() => _MainLayoutState();
 }
 
-class _MainLayoutState extends State<MainLayout> {
+class _MainLayoutState extends ConsumerState<MainLayout> {
   int _selectedSidebarIndex = 0; // Default to Dashboard
   int? _hoveredIndex;
 
@@ -31,23 +34,23 @@ class _MainLayoutState extends State<MainLayout> {
           Icon(
             icon,
             size: 80,
-            color: AppColors.textLight.withAlpha(128),
+            color: context.colors.textLight.withAlpha(128),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             'Halaman $title',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: AppColors.text,
+              color: context.colors.text,
             ),
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: 8),
+          Text(
             'Fitur ini sedang dalam pengembangan.',
             style: TextStyle(
               fontSize: 16,
-              color: AppColors.textLight,
+              color: context.colors.textLight,
             ),
           ),
         ],
@@ -66,11 +69,11 @@ class _MainLayoutState extends State<MainLayout> {
           },
         );
       case 1:
-        return const SlipGajiPage();
+        return SlipGajiPage();
       case 2:
-        return const InvoicePage();
+        return InvoicePage();
       case 3:
-        return const MasterDataPage();
+        return MasterDataPage();
       default:
         final item = _sidebarItems[_selectedSidebarIndex];
         return _buildPlaceholder(item['title'], item['icon']);
@@ -85,7 +88,7 @@ class _MainLayoutState extends State<MainLayout> {
           // Sidebar
           Container(
             width: 250,
-            color: AppColors.primary,
+            color: context.colors.primary,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -101,7 +104,7 @@ class _MainLayoutState extends State<MainLayout> {
                   ),
                 ),
 
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
 
                 // Main Sidebar Menu List
                 Expanded(
@@ -128,7 +131,7 @@ class _MainLayoutState extends State<MainLayout> {
                                   },
                                   borderRadius: BorderRadius.circular(8),
                                   child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
+                                    duration: Duration(milliseconds: 200),
                                     curve: Curves.easeInOut,
                                     decoration: BoxDecoration(
                                       color: isSelected
@@ -148,7 +151,7 @@ class _MainLayoutState extends State<MainLayout> {
                                           color: isSelected ? Colors.white : (_hoveredIndex == index ? Colors.white : Colors.white70),
                                           size: 20,
                                         ),
-                                        const SizedBox(width: 16),
+                                        SizedBox(width: 16),
                                         Expanded(
                                           child: Text(
                                             item['title'],
@@ -170,7 +173,28 @@ class _MainLayoutState extends State<MainLayout> {
                         ),
                       ),
                       
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
+                      
+                      // Theme Toggle Switch
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Dark Mode',
+                              style: TextStyle(color: Colors.white70, fontSize: 13),
+                            ),
+                            Switch(
+                              value: ref.watch(themeModeProvider) == ThemeMode.dark,
+                              onChanged: (val) {
+                                ref.read(themeModeProvider.notifier).state = val ? ThemeMode.dark : ThemeMode.light;
+                              },
+                              activeThumbColor: Colors.blue.shade300,
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -180,9 +204,9 @@ class _MainLayoutState extends State<MainLayout> {
           // Main content area
           Expanded(
             child: Container(
-              color: AppColors.background,
+              color: context.colors.background,
               child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
+                duration: Duration(milliseconds: 250),
                 transitionBuilder: (Widget child, Animation<double> animation) {
                   return FadeTransition(
                     opacity: animation,

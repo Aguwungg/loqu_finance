@@ -125,7 +125,7 @@ class PdfService {
                             style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey600),
                           ),
                           pw.Text(
-                            'LUNAS (Offline)',
+                            'LUNAS',
                             style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.green700),
                           ),
                         ],
@@ -238,17 +238,49 @@ class PdfService {
                         pw.SizedBox(height: 4),
                         pw.Row(
                           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
                           children: [
-                            pw.Text('Subsidi (+):', style: const pw.TextStyle(fontSize: 10)),
+                            pw.Column(
+                              crossAxisAlignment: pw.CrossAxisAlignment.start,
+                              children: [
+                                pw.Text('Subsidi (+):', style: const pw.TextStyle(fontSize: 10)),
+                                if (data.catatanSubsidi.trim().isNotEmpty)
+                                  pw.Text(data.catatanSubsidi, style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
+                              ]
+                            ),
                             pw.Text('Rp ${_formatCurrency(data.subsidi)}', style: const pw.TextStyle(fontSize: 10)),
                           ],
                         ),
                         pw.SizedBox(height: 4),
                         pw.Row(
                           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
                           children: [
-                            pw.Text('Reimburse (-):', style: const pw.TextStyle(fontSize: 10)),
+                            pw.Column(
+                              crossAxisAlignment: pw.CrossAxisAlignment.start,
+                              children: [
+                                pw.Text('Reimburse (+):', style: const pw.TextStyle(fontSize: 10)),
+                                if (data.catatanReimburse.trim().isNotEmpty)
+                                  pw.Text(data.catatanReimburse, style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
+                              ]
+                            ),
                             pw.Text('Rp ${_formatCurrency(data.reimburse)}', style: const pw.TextStyle(fontSize: 10)),
+                          ],
+                        ),
+                        pw.SizedBox(height: 4),
+                        pw.Row(
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.Column(
+                              crossAxisAlignment: pw.CrossAxisAlignment.start,
+                              children: [
+                                pw.Text('Potongan (-):', style: const pw.TextStyle(fontSize: 10)),
+                                if (data.catatanPotongan.trim().isNotEmpty)
+                                  pw.Text(data.catatanPotongan, style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
+                              ]
+                            ),
+                            pw.Text('Rp ${_formatCurrency(data.potongan)}', style: const pw.TextStyle(fontSize: 10)),
                           ],
                         ),
                         pw.SizedBox(height: 6),
@@ -285,11 +317,11 @@ class PdfService {
                   pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.center,
                     children: [
-                      pw.Text('Pengelola LOQU,', style: const pw.TextStyle(fontSize: 10)),
+                      pw.Text('Finance LOQU,', style: const pw.TextStyle(fontSize: 10)),
                       pw.SizedBox(height: 50),
                       pw.Container(width: 100, height: 1, color: PdfColors.black),
                       pw.SizedBox(height: 4),
-                      pw.Text('Administrasi', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
+                      pw.Text('Rina', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
                     ],
                   ),
                 ],
@@ -303,7 +335,7 @@ class PdfService {
     return pdf.save();
   }
 
-  static Future<Uint8List> generateInvoicePdf(InvoiceFormState data, String invoiceNumber) async {
+  static Future<Uint8List> generateInvoicePdf(InvoiceFormState data, String invoiceNumber, {bool isLunas = false}) async {
     final pdf = pw.Document();
 
     pw.MemoryImage? pdfLogo;
@@ -421,8 +453,8 @@ class PdfService {
                             style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey600),
                           ),
                           pw.Text(
-                            'BELUM LUNAS',
-                            style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.amber700),
+                            isLunas ? 'LUNAS' : 'BELUM LUNAS',
+                            style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: isLunas ? PdfColors.green700 : PdfColors.amber700),
                           ),
                         ],
                       ),
@@ -584,13 +616,13 @@ class PdfService {
                         pw.SizedBox(height: 50),
                         pw.Container(width: 120, height: 0.5, color: PdfColors.black),
                         pw.SizedBox(height: 4),
-                        pw.Text('LOQU Administration', style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold)),
+                        pw.Text('Rina', style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold)),
                         pw.SizedBox(height: 24),
                         pw.Text('Penerima / Orang Tua,', style: const pw.TextStyle(fontSize: 10)),
                         pw.SizedBox(height: 50),
                         pw.Container(width: 120, height: 0.5, color: PdfColors.black),
                         pw.SizedBox(height: 4),
-                        pw.Text('(....................................)', style: const pw.TextStyle(fontSize: 9)),
+                        pw.Text(data.tagihanUntuk.isEmpty ? '(....................................)' : data.tagihanUntuk, style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold)),
                       ],
                     ),
                   ),
